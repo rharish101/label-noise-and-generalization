@@ -1,2 +1,6 @@
 # pyenv
 .python-version
+
+# Python stuff
+__pycache__/
+.mypy_cache/
