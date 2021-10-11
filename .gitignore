@@ -4,3 +4,7 @@
 # Python stuff
 __pycache__/
 .mypy_cache/
+
+# Project-specific stuff
+datasets/
+logs/
