@@ -1,4 +1,5 @@
 """Common utilities."""
+import random
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -13,6 +14,27 @@ from .config import Config
 from .models import BaseModel
 
 PRECISION: Final = 16  # use automatic mixed-precision training
+
+
+class RandomLabelNoise(torch.nn.Module):
+    """Class for randomly adding label noise."""
+
+    def __init__(self, p: float, num_classes: int):
+        """Store parameters.
+
+        Args:
+            p: The probability of changing the label
+            num_classes: The total number of classes in the dataset
+        """
+        super().__init__()
+        self.noise_prob = p
+        self.num_classes = num_classes
+
+    def forward(self, lbl: int) -> int:
+        """Randomly flip the label."""
+        if random.random() < self.noise_prob:
+            lbl = random.randrange(self.num_classes)
+        return lbl
 
 
 def get_dataloader(

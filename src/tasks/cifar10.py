@@ -6,6 +6,12 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
+from typing_extensions import Final
+
+from ..config import Config
+from ..utils import RandomLabelNoise
+
+NUM_CLASSES: Final = 10
 
 
 # TODO: Improve transforms
@@ -19,9 +25,14 @@ def get_transform() -> Callable[[Tensor], Tensor]:
     )
 
 
-def get_cifar10(data_dir: Path) -> Tuple[Dataset, Dataset]:
+def get_cifar10(data_dir: Path, config: Config) -> Tuple[Dataset, Dataset]:
     """Get the CIFAR10 train and test datasets."""
-    train = CIFAR10(data_dir, download=True, transform=get_transform())
+    train = CIFAR10(
+        data_dir,
+        download=True,
+        transform=get_transform(),
+        target_transform=RandomLabelNoise(config.lbl_noise, 10),
+    )
     test = CIFAR10(
         data_dir, train=False, download=True, transform=get_transform()
     )

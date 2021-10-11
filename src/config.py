@@ -16,6 +16,7 @@ class Config:
         lr: The learning rate for the optimizer
         weight_decay: The L2 weight decay for the optimizer
         max_epochs: The max epochs to train the model
+        lbl_noise: The probability of flipping the class label during training
     """
 
     batch_size: int = 64
@@ -23,6 +24,7 @@ class Config:
     lr: float = 1e-4
     weight_decay: float = 2e-5
     max_epochs: int = 10
+    lbl_noise: float = 0.0
 
 
 def load_config(config_path: Optional[Path]) -> Config:
