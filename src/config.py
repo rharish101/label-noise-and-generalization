@@ -12,9 +12,13 @@ class Config:
 
     Attributes:
         batch_size: The batch size for training
+        lr: The learning rate for the optimizer
+        weight_decay: The L2 weight decay for the optimizer
     """
 
     batch_size: int = 64
+    lr: float = 1e-4
+    weight_decay: float = 2e-5
 
 
 def load_config(config_path: Optional[Path]) -> Config:
