@@ -1,0 +1,28 @@
+"""Train a ResNet on CIFAR10."""
+from pathlib import Path
+from typing import Callable, Tuple
+
+from torch import Tensor
+from torch.utils.data import Dataset
+from torchvision import transforms
+from torchvision.datasets import CIFAR10
+
+
+# TODO: Improve transforms
+def get_transform() -> Callable[[Tensor], Tensor]:
+    """Get the image augmentations for CIFAR10."""
+    return transforms.Compose(
+        [
+            transforms.Resize([64, 64]),
+            transforms.ToTensor(),
+        ]
+    )
+
+
+def get_cifar10(data_dir: Path) -> Tuple[Dataset, Dataset]:
+    """Get the CIFAR10 train and test datasets."""
+    train = CIFAR10(data_dir, download=True, transform=get_transform())
+    test = CIFAR10(
+        data_dir, train=False, download=True, transform=get_transform()
+    )
+    return train, test
