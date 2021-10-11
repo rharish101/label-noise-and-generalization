@@ -12,12 +12,14 @@ class Config:
 
     Attributes:
         batch_size: The batch size for training
+        optim: The choice of optimizer (must be one of adam/rmsprop/sgd)
         lr: The learning rate for the optimizer
         weight_decay: The L2 weight decay for the optimizer
         max_epochs: The max epochs to train the model
     """
 
     batch_size: int = 64
+    optim: str = "adam"
     lr: float = 1e-4
     weight_decay: float = 2e-5
     max_epochs: int = 10
