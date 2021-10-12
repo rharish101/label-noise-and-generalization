@@ -57,6 +57,10 @@ class BaseModel(LightningModule):
         config: The hyper-param config
     """
 
+    TRAIN_TAG: Final = "training"
+    VAL_TAG: Final = "validation"
+    LOSS_TAG: Final = "loss"
+
     _OPTIMS: Final = {
         "adam": Adam,
         "rmsprop": RMSpropW,
@@ -82,6 +86,6 @@ class BaseModel(LightningModule):
             "optimizer": optim,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": self.LOSS_TAG,
+                "monitor": f"{self.TRAIN_TAG}/{self.LOSS_TAG}",
             },
         }

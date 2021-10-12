@@ -12,8 +12,7 @@ from .base import BaseModel
 class ResNet(BaseModel):
     """A ResNet-based model for image classification."""
 
-    LOSS_TAG: Final = "losses/classification"
-    ACC_TAG: Final = "metrics/accuracy"
+    ACC_TAG: Final = "accuracy"
 
     def __init__(self, config: Config):
         """Initialize the model."""
@@ -34,10 +33,10 @@ class ResNet(BaseModel):
         loss = self.loss(logits, lbl)
 
         if batch_idx % self.trainer.log_every_n_steps == 0:
-            self.log(self.LOSS_TAG, loss, logger=False)
+            self.log(f"{self.TRAIN_TAG}/{self.LOSS_TAG}", loss)
             pred_lbl = logits.argmax(-1)
             acc = (pred_lbl == lbl).float().mean()
-            self.log(self.ACC_TAG, acc)
+            self.log(f"{self.TRAIN_TAG}/{self.ACC_TAG}", acc)
 
         return loss
 
@@ -48,8 +47,8 @@ class ResNet(BaseModel):
         img, lbl = batch
         logits = self.model(img)
         loss = self.loss(logits, lbl)
-        self.log(self.LOSS_TAG, loss)
+        self.log(f"{self.VAL_TAG}/{self.LOSS_TAG}", loss)
 
         pred_lbl = logits.argmax(-1)
         acc = (pred_lbl == lbl).float().mean()
-        self.log(self.ACC_TAG, acc)
+        self.log(f"{self.VAL_TAG}/{self.ACC_TAG}", acc)
