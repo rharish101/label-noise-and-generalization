@@ -71,6 +71,7 @@ def train(
     log_dir: Path,
     log_steps: int,
     ckpt_path: Optional[Path] = None,
+    expt_name: str = "default",
 ) -> None:
     """Train the requested model on the requested dataset."""
     train_loader = get_dataloader(
@@ -79,7 +80,7 @@ def train(
     val_loader = get_dataloader(val_dataset, config, num_workers)
 
     timestamp = ckpt_path.parent.parent.name if ckpt_path is not None else None
-    logger = get_logger(log_dir, timestamp=timestamp)
+    logger = get_logger(log_dir, expt_name=expt_name, timestamp=timestamp)
     logger.log_hyperparams(vars(config))
 
     # Detect if we're using CPUs, because there's no AMP on CPUs

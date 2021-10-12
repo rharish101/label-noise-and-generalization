@@ -30,6 +30,7 @@ def main(args: Namespace) -> None:
         log_dir=args.log_dir.expanduser(),
         log_steps=args.log_steps,
         ckpt_path=ckpt_path,
+        expt_name="cifar10",
     )
 
 
