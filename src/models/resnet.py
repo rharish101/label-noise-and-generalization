@@ -15,7 +15,11 @@ class ResNet(BaseModel):
     ACC_TAG: Final = "accuracy"
 
     def __init__(self, config: Config):
-        """Initialize the model."""
+        """Initialize the model.
+
+        Args:
+            config: The hyper-param config
+        """
         super().__init__(config, nn.CrossEntropyLoss())
         self.model = resnet18()
 
@@ -26,7 +30,15 @@ class ResNet(BaseModel):
     def training_step(
         self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> Tensor:
-        """Train the model for one step."""
+        """Train the model for one step.
+
+        Args:
+            batch: A 2-tuple of batched images and corresponding labels
+            batch_idx: The index of the batch within the epoch
+
+        Returns:
+            The classification loss
+        """
         img, lbl = batch
         logits = self.model(img)
         loss = self.loss_fn(logits, lbl)
@@ -43,7 +55,12 @@ class ResNet(BaseModel):
     def validation_step(
         self, batch: Tuple[Tensor, Tensor], batch_idx: int
     ) -> None:
-        """Log metrics on a validation batch."""
+        """Log metrics on a validation batch.
+
+        Args:
+            batch: A 2-tuple of batched images and corresponding labels
+            batch_idx: The index of the batch within the epoch
+        """
         img, lbl = batch
         logits = self.model(img)
         loss = self.loss_fn(logits, lbl)

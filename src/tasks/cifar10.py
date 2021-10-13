@@ -15,7 +15,14 @@ NUM_CLASSES: Final = 10
 
 
 def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
-    """Get the image augmentations for CIFAR10."""
+    """Get the image augmentations for CIFAR10.
+
+    Args:
+        train: Whether this is the training phase
+
+    Returns:
+        The image transformation function
+    """
     transform_list = [transforms.Resize([64, 64])]
     if train:
         transform_list.append(
@@ -26,7 +33,16 @@ def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
 
 
 def get_cifar10(data_dir: Path, config: Config) -> Tuple[Dataset, Dataset]:
-    """Get the CIFAR10 train and test datasets."""
+    """Get the CIFAR10 train and test datasets.
+
+    Args:
+        data_dir: The path to the directory where all datasets are to be stored
+        config: The hyper-param config
+
+    Returns:
+        The training dataset
+        The test dataset
+    """
     train = CIFAR10(
         data_dir,
         download=True,

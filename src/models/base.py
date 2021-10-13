@@ -19,6 +19,7 @@ class BaseModel(LightningModule, ABC):
 
     Attributes:
         config: The hyper-param config
+        loss_fn: The loss function
     """
 
     # Tag prefixes for training/validation
@@ -27,12 +28,12 @@ class BaseModel(LightningModule, ABC):
 
     # Tags for losses, metrics, etc.
     LOSS_TAG: Final = "loss"
-    GRAD_NORM_TAG: Final = "gradient_norm"
-    WT_UPDATE_NORM_TAG: Final = "weight_update_norm"
+    GRAD_NORM_TAG: Final = "gradient_norm"  # norm of gradient
+    WT_UPDATE_NORM_TAG: Final = "weight_update_norm"  # ||W_{n+1} - W_n||
 
     # Tags for logging eigenvalues of the (stochastic) Hessian
-    HESS_EV_FMT: Final = "hessian_eigenvalue_{}"
-    NUM_HESS_EV: Final = 2
+    HESS_EV_FMT: Final = "hessian_eigenvalue_{}"  # To format with `.format()`
+    NUM_HESS_EV: Final = 2  # No. of top Hessian eigenvalues to calculate
 
     def __init__(self, config: Config, loss_fn: Module):
         """Initialize the model."""
@@ -87,7 +88,13 @@ class BaseModel(LightningModule, ABC):
     def log_curvature_metrics(
         self, inputs: Tensor, targets: Tensor, train: bool = False
     ) -> None:
-        """Log metrics related to the curvature."""
+        """Log metrics related to the curvature.
+
+        Args:
+            inputs: The batch of inputs to the model
+            targets: The batch of targets for the model
+            train: Whether this is the training phase
+        """
         hessian_comp = hessian(self, self.loss_fn, data=(inputs, targets))
         hessian_evs = hessian_comp.eigenvalues(top_n=self.NUM_HESS_EV)[0]
 

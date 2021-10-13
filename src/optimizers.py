@@ -1,7 +1,4 @@
-"""Classes and functions for decoupled weight-decay optimizers.
-
-This concept was introduced in: https://arxiv.org/abs/1711.05101
-"""
+"""Utilities for various optimizers."""
 from typing import Iterable
 
 from torch import Tensor
@@ -11,7 +8,23 @@ from .config import Config
 
 
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
-    """Choose an optimizer according to the config."""
+    """Choose an optimizer according to the config.
+
+    The available optimizers are:
+        "adam": AdamW
+        "rmsprop": RMSpropW
+        "sgd": SGDW
+
+    The "W" suffix indicates that these optimizers use decoupled weight-decay,
+    as introduced in: https://arxiv.org/abs/1711.05101
+
+    Args:
+        params: The model parameters to optimize
+        config: The hyper-param config
+
+    Returns:
+        The requested optimizer, as per the config
+    """
     if config.optim == "adam":
         momentum = config.momentum
         adaptivity = config.adaptivity

@@ -40,7 +40,18 @@ class RandomLabelNoise(torch.nn.Module):
 def get_dataloader(
     dataset: Dataset, config: Config, num_workers: int, shuffle: bool = False
 ) -> DataLoader:
-    """Get a dataloader for the dataset."""
+    """Get a dataloader for the dataset.
+
+    Args:
+        dataset: The dataset object
+        config: The hyper-param config
+        num_workers: The number of workers to use for loading/processing the
+            dataset items
+        shuffle: Whether to shuffle the items every epoch before iterating
+
+    Returns:
+        The data loader object for the dataset
+    """
     return DataLoader(
         dataset,
         batch_size=config.batch_size,
@@ -51,13 +62,24 @@ def get_dataloader(
 
 
 def get_logger(
-    log_dir: Path, expt_name: str = "default", timestamp: Optional[str] = None
+    log_dir: Path,
+    expt_name: str = "default",
+    version: Optional[str] = None,
 ) -> LightningLoggerBase:
-    """Get a logger."""
-    if timestamp is None:
-        timestamp = datetime.now().astimezone().isoformat()
+    """Get a logger.
+
+    Args:
+        log_dir: The path to the directory where all logs are to be stored
+        expt_name: The name for the experiment
+        version: The name for this version/instance of the experiment
+
+    Returns:
+        The requested logger
+    """
+    if version is None:
+        version = datetime.now().astimezone().isoformat()
     return TensorBoardLogger(
-        log_dir, name=expt_name, version=timestamp, default_hp_metric=False
+        log_dir, name=expt_name, version=version, default_hp_metric=False
     )
 
 
@@ -73,14 +95,31 @@ def train(
     ckpt_path: Optional[Path] = None,
     expt_name: str = "default",
 ) -> None:
-    """Train the requested model on the requested dataset."""
+    """Train the requested model on the requested dataset.
+
+    Args:
+        model: The model to train
+        train_dataset: The training dataset
+        val_dataset: The validation dataset
+        config: The hyper-param config
+        num_gpus: The number of GPUs to use (-1 to use all)
+        num_workers: The number of workers to use for loading/processing the
+            dataset items
+        log_dir: The path to the directory where all logs are to be stored
+        log_steps: The step interval within an epoch for logging
+        ckpt_path: The path to the checkpoint file to resume from (None to
+            train from scratch)
+        expt_name: The name for the experiment
+    """
     train_loader = get_dataloader(
         train_dataset, config, num_workers, shuffle=True
     )
     val_loader = get_dataloader(val_dataset, config, num_workers)
 
-    timestamp = ckpt_path.parent.parent.name if ckpt_path is not None else None
-    logger = get_logger(log_dir, expt_name=expt_name, timestamp=timestamp)
+    # Assuming that the path follows the folder stucture:
+    # log_dir/expt_name/version/checkpoints/ckpt_file
+    version = ckpt_path.parent.parent.name if ckpt_path is not None else None
+    logger = get_logger(log_dir, expt_name=expt_name, version=version)
     logger.log_hyperparams(vars(config))
 
     # Detect if we're using CPUs, because there's no AMP on CPUs
