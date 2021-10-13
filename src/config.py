@@ -14,6 +14,8 @@ class Config:
         batch_size: The batch size for training
         optim: The choice of optimizer (must be one of adam/rmsprop/sgd)
         lr: The learning rate for the optimizer
+        momentum: The momentum parameter
+        adaptivity: The adaptivity parameter
         weight_decay: The L2 weight decay for the optimizer
         max_epochs: The max epochs to train the model
         lbl_noise: The probability of flipping the class label during training
@@ -22,6 +24,8 @@ class Config:
     batch_size: int = 64
     optim: str = "adam"
     lr: float = 1e-4
+    momentum: float = 0.9
+    adaptivity: float = 0.999
     weight_decay: float = 2e-5
     max_epochs: int = 10
     lbl_noise: float = 0.0
