@@ -14,15 +14,15 @@ from ..utils import RandomLabelNoise
 NUM_CLASSES: Final = 10
 
 
-# TODO: Improve transforms
-def get_transform() -> Callable[[Tensor], Tensor]:
+def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
     """Get the image augmentations for CIFAR10."""
-    return transforms.Compose(
-        [
-            transforms.Resize([64, 64]),
-            transforms.ToTensor(),
-        ]
-    )
+    transform_list = [transforms.Resize([64, 64])]
+    if train:
+        transform_list.append(
+            transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10)
+        )
+    transform_list += [transforms.ToTensor()]
+    return transforms.Compose(transform_list)
 
 
 def get_cifar10(data_dir: Path, config: Config) -> Tuple[Dataset, Dataset]:
@@ -30,7 +30,7 @@ def get_cifar10(data_dir: Path, config: Config) -> Tuple[Dataset, Dataset]:
     train = CIFAR10(
         data_dir,
         download=True,
-        transform=get_transform(),
+        transform=get_transform(train=True),
         target_transform=RandomLabelNoise(config.lbl_noise, 10),
     )
     test = CIFAR10(
