@@ -8,12 +8,9 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
-from typing_extensions import Final
 
 from .config import Config
 from .models import BaseModel
-
-PRECISION: Final = 16  # use automatic mixed-precision training
 
 
 class RandomLabelNoise(torch.nn.Module):
@@ -92,6 +89,7 @@ def train(
     num_workers: int,
     log_dir: Path,
     log_steps: int,
+    precision: int = 16,  # Use automatic mixed-precision training
     ckpt_path: Optional[Path] = None,
     expt_name: str = "default",
 ) -> None:
@@ -107,6 +105,7 @@ def train(
             dataset items
         log_dir: The path to the directory where all logs are to be stored
         log_steps: The step interval within an epoch for logging
+        precision: The floating-point precision to use for training the model
         ckpt_path: The path to the checkpoint file to resume from (None to
             train from scratch)
         expt_name: The name for the experiment
@@ -124,9 +123,9 @@ def train(
 
     # Detect if we're using CPUs, because there's no AMP on CPUs
     if num_gpus == 0 or (num_gpus == -1 and not torch.cuda.is_available()):
-        precision = max(PRECISION, 32)  # allow 64-bit precision
+        precision = max(precision, 32)  # allow 64-bit precision
     else:
-        precision = PRECISION
+        precision = precision
 
     trainer = Trainer(
         resume_from_checkpoint=ckpt_path,

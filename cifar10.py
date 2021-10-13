@@ -29,6 +29,7 @@ def main(args: Namespace) -> None:
         num_workers=args.num_workers,
         log_dir=args.log_dir.expanduser(),
         log_steps=args.log_steps,
+        precision=args.precision,
         ckpt_path=ckpt_path,
         expt_name="cifar10",
     )
@@ -51,6 +52,13 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="Number of GPUs to use (-1 for all)",
+    )
+    parser.add_argument(
+        "-p",
+        "--precision",
+        type=int,
+        default=16,
+        help="Floating-point precision to use (16 implies AMP)",
     )
     parser.add_argument(
         "-w",
