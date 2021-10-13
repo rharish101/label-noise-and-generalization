@@ -1,4 +1,5 @@
 """Base class for models."""
+from abc import ABC
 from typing import Any, Dict
 
 from pyhessian import hessian
@@ -12,7 +13,7 @@ from ..config import Config
 from ..optimizers import get_optim
 
 
-class BaseModel(LightningModule):
+class BaseModel(LightningModule, ABC):
     """The base class for other models.
 
     Attributes:
