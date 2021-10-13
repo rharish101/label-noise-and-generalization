@@ -1,8 +1,8 @@
 """Base class for models."""
 from typing import Any, Dict
 
-import torch
 from pytorch_lightning import LightningModule
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from typing_extensions import Final
 
 from ..config import Config
@@ -28,7 +28,7 @@ class BaseModel(LightningModule):
     def configure_optimizers(self) -> Dict[str, Any]:
         """Return the requested optimizer and LR scheduler."""
         optim = get_optim(self.parameters(), self.config)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim)
+        scheduler = ReduceLROnPlateau(optim)
         return {
             "optimizer": optim,
             "lr_scheduler": {
