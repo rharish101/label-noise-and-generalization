@@ -20,8 +20,11 @@ class BaseModel(LightningModule, ABC):
         config: The hyper-param config
     """
 
-    TRAIN_TAG: Final = "training"
-    VAL_TAG: Final = "validation"
+    # Tag prefixes for training/validation
+    TRAIN_PREFIX: Final = "training"
+    VAL_PREFIX: Final = "validation"
+
+    # Tags for losses, metrics, etc.
     LOSS_TAG: Final = "loss"
 
     # Tags for logging eigenvalues of the (stochastic) Hessian
@@ -41,7 +44,7 @@ class BaseModel(LightningModule, ABC):
         hessian_comp = hessian(self, self.loss_fn, data=(inputs, targets))
         hessian_evs = hessian_comp.eigenvalues(top_n=self.NUM_HESS_EV)[0]
 
-        mode_tag = self.TRAIN_TAG if train else self.VAL_TAG
+        mode_tag = self.TRAIN_PREFIX if train else self.VAL_PREFIX
         for i in range(self.NUM_HESS_EV):
             self.log(
                 f"{mode_tag}/{self.HESS_EV_FMT}".format(i), hessian_evs[i]
@@ -55,6 +58,6 @@ class BaseModel(LightningModule, ABC):
             "optimizer": optim,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": f"{self.TRAIN_TAG}/{self.LOSS_TAG}",
+                "monitor": f"{self.TRAIN_PREFIX}/{self.LOSS_TAG}",
             },
         }

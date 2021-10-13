@@ -32,10 +32,10 @@ class ResNet(BaseModel):
         loss = self.loss_fn(logits, lbl)
 
         if batch_idx % self.trainer.log_every_n_steps == 0:
-            self.log(f"{self.TRAIN_TAG}/{self.LOSS_TAG}", loss)
+            self.log(f"{self.TRAIN_PREFIX}/{self.LOSS_TAG}", loss)
             pred_lbl = logits.argmax(-1)
             acc = (pred_lbl == lbl).float().mean()
-            self.log(f"{self.TRAIN_TAG}/{self.ACC_TAG}", acc)
+            self.log(f"{self.TRAIN_PREFIX}/{self.ACC_TAG}", acc)
             self.log_curvature_metrics(img, lbl, train=True)
 
         return loss
@@ -47,8 +47,8 @@ class ResNet(BaseModel):
         img, lbl = batch
         logits = self.model(img)
         loss = self.loss_fn(logits, lbl)
-        self.log(f"{self.VAL_TAG}/{self.LOSS_TAG}", loss)
+        self.log(f"{self.VAL_PREFIX}/{self.LOSS_TAG}", loss)
 
         pred_lbl = logits.argmax(-1)
         acc = (pred_lbl == lbl).float().mean()
-        self.log(f"{self.VAL_TAG}/{self.ACC_TAG}", acc)
+        self.log(f"{self.VAL_PREFIX}/{self.ACC_TAG}", acc)
