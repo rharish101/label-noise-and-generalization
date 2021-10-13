@@ -18,7 +18,7 @@ class ResNet(BaseModel):
         """Initialize the model."""
         super().__init__(config)
         self.model = resnet18()
-        self.loss = nn.CrossEntropyLoss()
+        self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, img: Tensor) -> Tensor:
         """Get the inference output."""
@@ -30,7 +30,7 @@ class ResNet(BaseModel):
         """Train the model for one step."""
         img, lbl = batch
         logits = self.model(img)
-        loss = self.loss(logits, lbl)
+        loss = self.loss_fn(logits, lbl)
 
         if batch_idx % self.trainer.log_every_n_steps == 0:
             self.log(f"{self.TRAIN_TAG}/{self.LOSS_TAG}", loss)
@@ -46,7 +46,7 @@ class ResNet(BaseModel):
         """Log metrics on a validation batch."""
         img, lbl = batch
         logits = self.model(img)
-        loss = self.loss(logits, lbl)
+        loss = self.loss_fn(logits, lbl)
         self.log(f"{self.VAL_TAG}/{self.LOSS_TAG}", loss)
 
         pred_lbl = logits.argmax(-1)
