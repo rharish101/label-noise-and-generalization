@@ -2,6 +2,7 @@
 from abc import ABC
 from typing import Any, Dict
 
+import torch
 from pyhessian import hessian
 from pytorch_lightning import LightningModule
 from torch import Tensor
@@ -26,6 +27,8 @@ class BaseModel(LightningModule, ABC):
 
     # Tags for losses, metrics, etc.
     LOSS_TAG: Final = "loss"
+    GRAD_NORM_TAG: Final = "gradient_norm"
+    WT_UPDATE_NORM_TAG: Final = "weight_update_norm"
 
     # Tags for logging eigenvalues of the (stochastic) Hessian
     HESS_EV_FMT: Final = "hessian_eigenvalue_{}"
@@ -36,6 +39,50 @@ class BaseModel(LightningModule, ABC):
         super().__init__()
         self.config = config
         self.loss_fn = loss_fn
+
+        # Used for logging weight update norms
+        self._prev_weights: Dict[str, Tensor] = {}
+
+    def on_before_optimizer_step(self, optimizer, optimizer_idx) -> None:
+        """Log gradient norms and save previous weights.
+
+        The previous weights are saved for calculating the weight update norm.
+        """
+        if self.global_step % self.trainer.log_every_n_steps != 0:
+            return
+
+        grad_norms = []
+
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                self._prev_weights[name] = param.clone().detach()
+                if param.grad is not None:
+                    grad_norms.append(torch.linalg.norm(param.grad))
+
+        if grad_norms:  # This can be empty in the 0th step
+            self.logger.experiment.add_histogram(
+                self.GRAD_NORM_TAG,
+                torch.stack(grad_norms),
+                global_step=self.global_step,
+            )
+
+    def on_train_batch_end(self, outputs, batch, batch_idx, unused=0) -> None:
+        """Log weight update norms."""
+        if self.global_step % self.trainer.log_every_n_steps != 0:
+            return
+
+        update_norms = []
+
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                diff = param - self._prev_weights[name]
+                update_norms.append(torch.linalg.norm(diff))
+
+        self.logger.experiment.add_histogram(
+            self.WT_UPDATE_NORM_TAG,
+            torch.stack(update_norms),
+            global_step=self.global_step,
+        )
 
     def log_curvature_metrics(
         self, inputs: Tensor, targets: Tensor, train: bool = False
