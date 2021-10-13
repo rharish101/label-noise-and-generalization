@@ -1,7 +1,10 @@
 """Base class for models."""
 from typing import Any, Dict
 
+from pyhessian import hessian
 from pytorch_lightning import LightningModule
+from torch import Tensor
+from torch.nn import Module
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from typing_extensions import Final
 
@@ -20,10 +23,28 @@ class BaseModel(LightningModule):
     VAL_TAG: Final = "validation"
     LOSS_TAG: Final = "loss"
 
-    def __init__(self, config: Config):
+    # Tags for logging eigenvalues of the (stochastic) Hessian
+    HESS_EV_FMT: Final = "hessian_eigenvalue_{}"
+    NUM_HESS_EV: Final = 2
+
+    def __init__(self, config: Config, loss_fn: Module):
         """Initialize the model."""
         super().__init__()
         self.config = config
+        self.loss_fn = loss_fn
+
+    def log_curvature_metrics(
+        self, inputs: Tensor, targets: Tensor, train: bool = False
+    ) -> None:
+        """Log metrics related to the curvature."""
+        hessian_comp = hessian(self, self.loss_fn, data=(inputs, targets))
+        hessian_evs = hessian_comp.eigenvalues(top_n=self.NUM_HESS_EV)[0]
+
+        mode_tag = self.TRAIN_TAG if train else self.VAL_TAG
+        for i in range(self.NUM_HESS_EV):
+            self.log(
+                f"{mode_tag}/{self.HESS_EV_FMT}".format(i), hessian_evs[i]
+            )
 
     def configure_optimizers(self) -> Dict[str, Any]:
         """Return the requested optimizer and LR scheduler."""

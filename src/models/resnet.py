@@ -16,9 +16,8 @@ class ResNet(BaseModel):
 
     def __init__(self, config: Config):
         """Initialize the model."""
-        super().__init__(config)
+        super().__init__(config, nn.CrossEntropyLoss())
         self.model = resnet18()
-        self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, img: Tensor) -> Tensor:
         """Get the inference output."""
@@ -37,6 +36,7 @@ class ResNet(BaseModel):
             pred_lbl = logits.argmax(-1)
             acc = (pred_lbl == lbl).float().mean()
             self.log(f"{self.TRAIN_TAG}/{self.ACC_TAG}", acc)
+            self.log_curvature_metrics(img, lbl, train=True)
 
         return loss
 
