@@ -95,7 +95,12 @@ class BaseModel(LightningModule, ABC):
             targets: The batch of targets for the model
             train: Whether this is the training phase
         """
-        hessian_comp = hessian(self, self.loss_fn, data=(inputs, targets))
+        hessian_comp = hessian(
+            self,
+            self.loss_fn,
+            data=(inputs, targets),
+            cuda=self.device.type != "cpu",
+        )
         hessian_evs = hessian_comp.eigenvalues(top_n=self.NUM_HESS_EV)[0]
 
         mode_tag = self.TRAIN_PREFIX if train else self.VAL_PREFIX
