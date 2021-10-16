@@ -31,7 +31,7 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     elif config.optim == "rmsprop":
         momentum = 0
         adaptivity = config.adaptivity
-    elif config.optim == "adam":
+    elif config.optim == "sgd":
         momentum = config.momentum
         adaptivity = 0
     else:
