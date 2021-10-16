@@ -19,6 +19,7 @@ class Config:
         weight_decay: The L2 weight decay for the optimizer
         max_epochs: The max epochs to train the model
         lbl_noise: The probability of flipping the class label during training
+        val_split: The fraction of training data to use for validation
     """
 
     batch_size: int = 64
@@ -29,6 +30,7 @@ class Config:
     weight_decay: float = 2e-5
     max_epochs: int = 10
     lbl_noise: float = 0.0
+    val_split: float = 0.2
 
 
 def load_config(config_path: Optional[Path]) -> Config:

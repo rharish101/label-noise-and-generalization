@@ -12,7 +12,7 @@ from src.utils import train
 def main(args: Namespace) -> None:
     """Run the main program."""
     config = load_config(args.config)
-    train_dataset, test_dataset = get_cifar10(args.data_dir, config)
+    train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
     model = ResNet(config)
 
     if args.ckpt_path is None:
@@ -23,7 +23,7 @@ def main(args: Namespace) -> None:
     train(
         model,
         train_dataset,
-        test_dataset,
+        val_dataset,
         config,
         num_gpus=args.num_gpus,
         num_workers=args.num_workers,
