@@ -6,15 +6,7 @@ This is a repository for my semester project (Research in Computer Science: 263-
 * Antonio Orvieto
 * Jonas Kohler
 
-## Instructions
-
-All Python scripts use argparse to parse commandline arguments.
-To view the list of all positional and optional arguments for a script `script.py`, run:
-```sh
-./script.py --help
-```
-
-### Setup
+## Setup
 [Poetry](https://python-poetry.org/) is used for conveniently installing and managing dependencies.
 [pre-commit](https://pre-commit.com/) is used for managing hooks that run before each commit, to ensure code quality and run some basic tests.
 
@@ -52,7 +44,26 @@ To view the list of all positional and optional arguments for a script `script.p
 **NOTE:** You need to be inside the virtual environment where you installed the above dependencies every time you commit.
 However, this is not required if you have installed pre-commit globally.
 
-### Hyper-Parameter Configuration
+## Tasks
+
+Each task has a Python script associated with it.
+All scripts use argparse to parse commandline arguments.
+To view the list of all positional and optional arguments for a script `script.py`, run:
+```sh
+./script.py --help
+```
+
+The list of tasks implemented are:
+* **CIFAR10**: The script `cifar10.py` uses a ResNet-18 to train on the CIFAR10 dataset.
+
+Training logs are by default stored inside an ISO 8601 timestamped sub-directory, which is stored in a sub-directory of a parent directory (as given by the `--log-dir` argument).
+By default, this parent directory is `logs`.
+This contains:
+* The latest checkpoint of the trained model, within the `checkpoints` sub-directory
+* Training logs, as a file with the prefix `events.out.tfevents.`
+* The hyper-parameter config (including defaults), as a YAML file named `hparams.yaml`
+
+## Hyper-Parameter Configuration
 Hyper-parameters can be specified through YAML configs.
 For example, to specify a batch size of 32 and a learning rate of 0.001, use the following config:
 ```yaml
@@ -68,7 +79,9 @@ The available hyper-parameters, their documentation and default values are speci
 **NOTE:** You do not need to mention every single hyper-parameter in a config.
 In such a case, the missing ones will use their default values.
 
-#### Multi-GPU Training
+## Miscellaneous Features
+
+### Multi-GPU Training
 For choosing which GPUs to train on, use the `-g` or the `--num-gpus` flag when running a script as follows:
 ```sh
 ./script.py --num-gpus 3
@@ -77,7 +90,7 @@ For choosing which GPUs to train on, use the `-g` or the `--num-gpus` flag when 
 This selects three available GPUs for training.
 By default, only one GPU is chosen.
 
-#### Mixed Precision Training
+### Mixed Precision Training
 This implementation supports mixed-precision training, which is enabled by default.
 To manually set the floating-point precision, use the `-p` or the `--precision` flag when running a script as follows:
 ```sh
@@ -85,19 +98,3 @@ To manually set the floating-point precision, use the `-p` or the `--precision` 
 ```
 
 Note that mixed-precision training will only provide significant speed-ups if your GPUs have special support for mixed-precision compute.
-
-## Tasks
-### CIFAR10
-This uses a ResNet-18 to train on the CIFAR10 dataset.
-
-Run the script `cifar10.py`:
-```sh
-./cifar10.py
-```
-
-Training logs are by default stored inside an ISO 8601 timestamped sub-directory, which is stored in the `cifar10` sub-directory of a parent directory (as given by the `--log-dir` argument).
-By default, this parent directory is `logs`.
-This contains:
-* The latest checkpoint of the trained model, within the `checkpoints` sub-directory
-* Training logs, as a file with the prefix `events.out.tfevents.`
-* The hyper-parameter config (including defaults), as a YAML file named `hparams.yaml`
