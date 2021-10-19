@@ -90,8 +90,8 @@ def train(
     log_dir: Path,
     log_steps: int,
     precision: int = 16,  # Use automatic mixed-precision training
-    ckpt_path: Optional[Path] = None,
     expt_name: str = "default",
+    ckpt_path: Optional[Path] = None,
 ) -> None:
     """Train the requested model on the requested dataset.
 
@@ -106,9 +106,9 @@ def train(
         log_dir: The path to the directory where all logs are to be stored
         log_steps: The step interval within an epoch for logging
         precision: The floating-point precision to use for training the model
-        ckpt_path: The path to the checkpoint file to resume from (None to
-            train from scratch)
         expt_name: The name for the experiment
+        ckpt_path: The path to the checkpoint file to resume from (None to
+            train from scratch). This overrides `expt_name`.
     """
     train_loader = get_dataloader(
         train_dataset, config, num_workers, shuffle=True
@@ -117,7 +117,12 @@ def train(
 
     # Assuming that the path follows the folder stucture:
     # log_dir/expt_name/version/checkpoints/ckpt_file
-    version = ckpt_path.parent.parent.name if ckpt_path is not None else None
+    if ckpt_path is not None:
+        version: Optional[str] = ckpt_path.parent.parent.name
+        expt_name = ckpt_path.parent.parent.parent.name
+    else:
+        version = None
+
     logger = get_logger(log_dir, expt_name=expt_name, version=version)
     logger.log_hyperparams(vars(config))
 
