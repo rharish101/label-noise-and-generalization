@@ -56,13 +56,6 @@ To view the list of all positional and optional arguments for a script `script.p
 The list of tasks implemented are:
 * **CIFAR10**: The script `cifar10.py` uses a ResNet-18 to train on the CIFAR10 dataset.
 
-Training logs are by default stored inside an ISO 8601 timestamped sub-directory, which is stored in a sub-directory of a parent directory (as given by the `--log-dir` argument).
-By default, this parent directory is `logs`.
-This contains:
-* The latest checkpoint of the trained model, within the `checkpoints` sub-directory
-* Training logs, as a file with the prefix `events.out.tfevents.`
-* The hyper-parameter config (including defaults), as a YAML file named `hparams.yaml`
-
 ## Hyper-Parameter Configuration
 Hyper-parameters can be specified through YAML configs.
 For example, to specify a batch size of 32 and a learning rate of 0.001, use the following config:
@@ -78,6 +71,24 @@ The available hyper-parameters, their documentation and default values are speci
 
 **NOTE:** You do not need to mention every single hyper-parameter in a config.
 In such a case, the missing ones will use their default values.
+
+## Logs
+Logs are stored with the following directory structure:
+```
+project root
+|_ root log directory
+   |_ experiment name
+      |_ timestamped run directory
+```
+
+The timestamp uses the ISO 8601 convention along with the local timezone.
+The root log directory can be specified with the `--log-dir` argument.
+By default, this is `logs`.
+
+The sub-directory for each training run will contain:
+* The latest checkpoint of the trained model, within the `checkpoints` sub-directory
+* Training logs, as a file with the prefix `events.out.tfevents.`
+* The hyper-parameter config (including defaults), as a YAML file named `hparams.yaml`
 
 ## Miscellaneous Features
 
