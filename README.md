@@ -54,7 +54,7 @@ To view the list of all positional and optional arguments for a script `script.p
 ```
 
 The list of tasks implemented are:
-* **CIFAR10**: The script `cifar10.py` uses a ResNet-18 to train on the CIFAR10 dataset.
+* **CIFAR10**: The script [`cifar10.py`](./cifar10.py) uses a ResNet-18 to train on the CIFAR10 dataset.
 
 ## Hyper-Parameters
 
