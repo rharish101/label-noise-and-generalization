@@ -8,42 +8,70 @@ from typing_extensions import Final
 from src.config import load_config
 from src.models import ResNet
 from src.tasks import get_cifar10
-from src.utils import train
+from src.utils import train, tune_hparams
 
-# The top-level sub-directory within the log directory
+# The modes that the user can choose through the CLI
+_TRAIN_MODE: Final = "train"
+_TUNE_MODE: Final = "tune"
+
+# The top-level sub-directory within the log directory per-mode
 TRAIN_EXPT_NAME: Final = "cifar10"
+TUNE_EXPT_NAME: Final = "cifar10-tuning"
 
 
 def main(args: Namespace) -> None:
     """Run the main program."""
     config = load_config(args.config)
     train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
-    model = ResNet(config)
 
+    log_dir = args.log_dir.expanduser()
     if args.ckpt_path is None:
         ckpt_path = None
     else:
         ckpt_path = args.ckpt_path.expanduser()
 
-    train(
-        model,
-        train_dataset,
-        val_dataset,
-        config,
-        num_gpus=args.num_gpus,
-        num_workers=args.num_workers,
-        log_dir=args.log_dir.expanduser(),
-        log_steps=args.log_steps,
-        precision=args.precision,
-        ckpt_path=ckpt_path,
-        expt_name=TRAIN_EXPT_NAME,
-    )
+    if args.mode == _TRAIN_MODE:
+        train(
+            ResNet(config),
+            train_dataset,
+            val_dataset,
+            config,
+            num_gpus=args.num_gpus,
+            num_workers=args.num_workers,
+            log_dir=log_dir,
+            log_steps=args.log_steps,
+            precision=args.precision,
+            ckpt_path=ckpt_path,
+            expt_name=TRAIN_EXPT_NAME,
+        )
+    else:
+        tune_hparams(
+            ResNet,
+            train_dataset,
+            val_dataset,
+            config,
+            objective_tag=ResNet.ACC_TAG,
+            num_gpus=args.num_gpus,
+            num_workers=args.num_workers,
+            log_dir=log_dir,
+            log_steps=args.log_steps,
+            minimize=False,
+            precision=args.precision,
+            expt_name=TUNE_EXPT_NAME,
+        )
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(
         description="Train a ResNet on CIFAR10",
         formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=[_TRAIN_MODE, _TUNE_MODE],
+        default=_TRAIN_MODE,
+        help="Whether to just train a model or to tune optimizer hyper-params",
     )
     parser.add_argument(
         "-c",

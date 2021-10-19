@@ -1,10 +1,17 @@
 """Utilities for various optimizers."""
+import math
 from typing import Iterable
 
+from hyperopt import hp
 from torch import Tensor
 from torch.optim import Adam, Optimizer
+from typing_extensions import Final
 
 from .config import Config
+
+# Bounds for learning rate tuning
+_MIN_LR: Final = math.log(1e-6)
+_MAX_LR: Final = math.log(10)
 
 
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
@@ -43,3 +50,19 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
         betas=[momentum, adaptivity],
         weight_decay=config.weight_decay,
     )
+
+
+def get_hparam_space(config: Config):
+    """Get the hyper-param tuning space for the given config."""
+    space = {
+        "lr": hp.loguniform("lr", _MIN_LR, _MAX_LR),
+        "momentum": hp.uniform("momentum", 0, 1),
+        "adaptivity": hp.uniform("adaptivity", 0, 1),
+    }
+
+    if config.optim == "rmsprop":
+        del space["momentum"]
+    elif config.optim == "sgd":
+        del space["adaptivity"]
+
+    return space

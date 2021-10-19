@@ -1,7 +1,7 @@
 """Hyper-param config handling."""
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import yaml
 
@@ -18,6 +18,7 @@ class Config:
         adaptivity: The adaptivity parameter
         weight_decay: The L2 weight decay for the optimizer
         max_epochs: The max epochs to train the model
+        max_tuning_evals: The max evaluations for tuning the hyper-params
         lbl_noise: The probability of flipping the class label during training
         val_split: The fraction of training data to use for validation
     """
@@ -29,6 +30,7 @@ class Config:
     adaptivity: float = 0.999
     weight_decay: float = 2e-5
     max_epochs: int = 10
+    max_tuning_evals: int = 20
     lbl_noise: float = 0.0
     val_split: float = 0.2
 
@@ -44,3 +46,17 @@ def load_config(config_path: Optional[Path]) -> Config:
     else:
         args = {}
     return Config(**args)
+
+
+def update_config(config: Config, updates: Dict[str, Any]) -> Config:
+    """Return a new config by adding the updated values to the given config.
+
+    Args:
+        config: The source config
+        updates: The mapping of the keys that need to be updated with the newer
+            values
+
+    Returns:
+        The new updated config
+    """
+    return Config(**{**vars(config), **updates})

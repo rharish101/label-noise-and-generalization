@@ -1,5 +1,5 @@
 """ResNet for image classification."""
-from typing import Tuple
+from typing import Dict, Tuple
 
 from torch import Tensor, nn
 from torchvision.models import resnet18
@@ -54,7 +54,7 @@ class ResNet(BaseModel):
 
     def validation_step(
         self, batch: Tuple[Tensor, Tensor], batch_idx: int
-    ) -> None:
+    ) -> Dict[str, Tensor]:
         """Log metrics on a validation batch.
 
         Args:
@@ -69,3 +69,5 @@ class ResNet(BaseModel):
         pred_lbl = logits.argmax(-1)
         acc = (pred_lbl == lbl).float().mean()
         self.log(f"{self.VAL_PREFIX}/{self.ACC_TAG}", acc)
+
+        return {self.LOSS_TAG: loss, self.ACC_TAG: acc}
