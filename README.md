@@ -56,7 +56,9 @@ To view the list of all positional and optional arguments for a script `script.p
 The list of tasks implemented are:
 * **CIFAR10**: The script `cifar10.py` uses a ResNet-18 to train on the CIFAR10 dataset.
 
-## Hyper-Parameter Configuration
+## Hyper-Parameters
+
+### Configuration
 Hyper-parameters can be specified through YAML configs.
 For example, to specify a batch size of 32 and a learning rate of 0.001, use the following config:
 ```yaml
@@ -72,13 +74,37 @@ The available hyper-parameters, their documentation and default values are speci
 **NOTE:** You do not need to mention every single hyper-parameter in a config.
 In such a case, the missing ones will use their default values.
 
+### Tuning
+Support for tuning hyper-parameters for the optimizers is available in all scripts.
+Scripts have the `-m` or the `--mode` flag to set the mode of operation.
+This has the following values:
+* `train`: This simply trains a model. This is the default mode.
+* `tune`: This tunes the hyper-parameters using [Hyperopt](https://github.com/hyperopt/hyperopt).
+
+Thus, to tune hyper-parameters for models on a certain task, run the script for that task as follows:
+```sh
+./script.py --mode tune
+```
+
 ## Logs
-Logs are stored with the following directory structure:
+Logs are stored with certain directory structures.
+For training, this is:
 ```
 project root
 |_ root log directory
    |_ experiment name
       |_ timestamped run directory
+```
+
+For tuning, this is:
+```
+project root
+|_ root log directory
+   |_ experiment name
+      |_ timestamped tuning run directory
+         |_ training run 0 directory
+         |_ training run 1 directory
+         ...
 ```
 
 The timestamp uses the ISO 8601 convention along with the local timezone.
@@ -89,6 +115,10 @@ The sub-directory for each training run will contain:
 * The latest checkpoint of the trained model, within the `checkpoints` sub-directory
 * Training logs, as a file with the prefix `events.out.tfevents.`
 * The hyper-parameter config (including defaults), as a YAML file named `hparams.yaml`
+
+The sub-directory for a tuning run will contain:
+* Sub-directories for each training run
+* The best hyper-parameter config (including defaults), as a YAML file named `best-hparams.yaml`
 
 ## Miscellaneous Features
 
