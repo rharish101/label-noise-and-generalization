@@ -8,7 +8,8 @@ from typing_extensions import Final
 from src.config import load_config
 from src.models import ResNet
 from src.tasks import get_cifar10
-from src.utils import train, tune_hparams
+from src.training import train
+from src.tuning import tune_hparams
 
 # The modes that the user can choose through the CLI
 _TRAIN_MODE: Final = "train"
