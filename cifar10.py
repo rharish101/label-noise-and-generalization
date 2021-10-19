@@ -3,10 +3,15 @@
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
 
+from typing_extensions import Final
+
 from src.config import load_config
 from src.models import ResNet
 from src.tasks import get_cifar10
 from src.utils import train
+
+# The top-level sub-directory within the log directory
+TRAIN_EXPT_NAME: Final = "cifar10"
 
 
 def main(args: Namespace) -> None:
@@ -31,7 +36,7 @@ def main(args: Namespace) -> None:
         log_steps=args.log_steps,
         precision=args.precision,
         ckpt_path=ckpt_path,
-        expt_name="cifar10",
+        expt_name=TRAIN_EXPT_NAME,
     )
 
 
