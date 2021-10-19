@@ -138,7 +138,7 @@ def train(
         logger=logger,
         log_every_n_steps=log_steps,
         gpus=num_gpus,
-        auto_select_gpus=True,
+        auto_select_gpus=num_gpus != 0,
         precision=precision,
     )
     trainer.fit(model, train_loader, val_loader)
