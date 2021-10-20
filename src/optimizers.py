@@ -4,7 +4,7 @@ from typing import Iterable
 
 from hyperopt import hp
 from torch import Tensor
-from torch.optim import Adam, Optimizer
+from torch.optim import SGD, Adam, Optimizer
 from typing_extensions import Final
 
 from .config import Config
@@ -20,7 +20,7 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     The available optimizers are:
         "adam": AdamW
         "rmsprop": RMSpropW
-        "sgd": SGDW
+        "sgd": SGD
 
     The "W" suffix indicates that these optimizers use decoupled weight-decay,
     as introduced in: https://arxiv.org/abs/1711.05101
@@ -39,8 +39,12 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
         momentum = 0
         adaptivity = config.adaptivity
     elif config.optim == "sgd":
-        momentum = config.momentum
-        adaptivity = 0
+        return SGD(
+            params,
+            lr=config.lr,
+            momentum=config.momentum,
+            weight_decay=config.weight_decay,
+        )
     else:
         raise ValueError(f"Invalid optimizer {config.optim}")
 
