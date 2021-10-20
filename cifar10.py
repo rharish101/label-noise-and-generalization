@@ -10,6 +10,7 @@ from src.models import ResNet
 from src.tasks import get_cifar10
 from src.training import train
 from src.tuning import tune_hparams
+from src.utils import set_seed
 
 # The modes that the user can choose through the CLI
 _TRAIN_MODE: Final = "train"
@@ -22,6 +23,8 @@ TUNE_EXPT_NAME: Final = "cifar10-tuning"
 
 def main(args: Namespace) -> None:
     """Run the main program."""
+    set_seed(args.seed)
+
     config = load_config(args.config)
     train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
 
@@ -123,5 +126,11 @@ if __name__ == "__main__":
         "--ckpt-path",
         type=Path,
         help="Path to the checkpoint from where to continue training",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Random seed for reproducibility",
     )
     main(parser.parse_args())

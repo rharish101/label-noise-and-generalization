@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import torch
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
@@ -81,3 +82,10 @@ def get_logger(
     return TensorBoardLogger(
         log_dir, name=expt_name, version=version, default_hp_metric=False
     )
+
+
+def set_seed(seed: int) -> None:
+    """Set the global seeds."""
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
