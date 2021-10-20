@@ -21,6 +21,7 @@ class Config:
         max_tuning_evals: The max evaluations for tuning the hyper-params
         lbl_noise: The probability of flipping the class label during training
         val_split: The fraction of training data to use for validation
+        seed: The global random seed (for reproducibility)
     """
 
     batch_size: int = 64
@@ -33,6 +34,7 @@ class Config:
     max_tuning_evals: int = 20
     lbl_noise: float = 0.0
     val_split: float = 0.2
+    seed: int = 0
 
 
 def load_config(config_path: Optional[Path]) -> Config:

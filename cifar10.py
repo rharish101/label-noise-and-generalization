@@ -23,9 +23,8 @@ TUNE_EXPT_NAME: Final = "cifar10-tuning"
 
 def main(args: Namespace) -> None:
     """Run the main program."""
-    set_seed(args.seed)
-
     config = load_config(args.config)
+    set_seed(config.seed)
     train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
 
     log_dir = args.log_dir.expanduser()
@@ -126,11 +125,5 @@ if __name__ == "__main__":
         "--ckpt-path",
         type=Path,
         help="Path to the checkpoint from where to continue training",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=0,
-        help="Random seed for reproducibility",
     )
     main(parser.parse_args())
