@@ -13,6 +13,9 @@ from .config import Config
 _MIN_LR: Final = math.log(1e-6)
 _MAX_LR: Final = math.log(10)
 
+# Bound for maximum iterations of the scheduler
+_MAX_SCHED_ITER_LIMIT: Final = int(1e5)
+
 
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     """Choose an optimizer according to the config.
@@ -60,6 +63,8 @@ def get_hparam_space(config: Config):
     """Get the hyper-param tuning space for the given config."""
     space = {
         "lr": hp.loguniform("lr", _MIN_LR, _MAX_LR),
+        "min_lr": hp.loguniform("min_lr", _MIN_LR, _MAX_LR),
+        "max_sched_iter": hp.randint("max_sched_iter", _MAX_SCHED_ITER_LIMIT),
         "momentum": hp.uniform("momentum", 0, 1),
         "adaptivity": hp.uniform("adaptivity", 0, 1),
     }

@@ -7,7 +7,7 @@ from pyhessian import hessian
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import Module
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from typing_extensions import Final
 
 from ..config import Config
@@ -112,11 +112,7 @@ class BaseModel(LightningModule, ABC):
     def configure_optimizers(self) -> Dict[str, Any]:
         """Return the requested optimizer and LR scheduler."""
         optim = get_optim(self.parameters(), self.config)
-        scheduler = ReduceLROnPlateau(optim)
-        return {
-            "optimizer": optim,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "monitor": f"{self.TRAIN_PREFIX}/{self.LOSS_TAG}",
-            },
-        }
+        scheduler = CosineAnnealingLR(
+            optim, T_max=self.config.max_sched_iter, eta_min=self.config.min_lr
+        )
+        return {"optimizer": optim, "lr_scheduler": scheduler}
