@@ -28,7 +28,12 @@ def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
         transform_list.append(
             transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10)
         )
-    transform_list += [transforms.ToTensor()]
+    transform_list += [
+        transforms.ToTensor(),
+        transforms.Normalize(
+            (0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)
+        ),
+    ]
     return transforms.Compose(transform_list)
 
 
