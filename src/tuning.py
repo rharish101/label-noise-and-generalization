@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import Callable, Dict
 
+import numpy as np
 import yaml
 from hyperopt import fmin, space_eval, tpe
 from torch.utils.data import Dataset
@@ -59,6 +60,10 @@ def tune_hparams(
     def objective(args: Dict[str, float]) -> float:
         nonlocal tuning_iter
 
+        for hparam in args:
+            if isinstance(hparam, np.int64):
+                args[hparam] = int(args[hparam])
+
         new_config = update_config(config, args)
         model = model_fn(config)
 
@@ -89,6 +94,9 @@ def tune_hparams(
         show_progressbar=False,
     )
     best_args = space_eval(space, best_hparams)
+    for hparam in best_args:
+        if isinstance(hparam, np.int64):
+            best_args[hparam] = int(best_args[hparam])
     best_config = update_config(config, best_args)
 
     with open(
