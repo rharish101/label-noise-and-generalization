@@ -28,10 +28,10 @@ def main(args: Namespace) -> None:
     train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
 
     log_dir = args.log_dir.expanduser()
-    if args.ckpt_path is None:
-        ckpt_path = None
+    if args.resume_path is None:
+        resume_path = None
     else:
-        ckpt_path = args.ckpt_path.expanduser()
+        resume_path = args.resume_path.expanduser()
 
     if args.mode == _TRAIN_MODE:
         train(
@@ -44,7 +44,7 @@ def main(args: Namespace) -> None:
             log_dir=log_dir,
             log_steps=args.log_steps,
             precision=args.precision,
-            ckpt_path=ckpt_path,
+            ckpt_path=resume_path,
             expt_name=TRAIN_EXPT_NAME,
         )
     else:
@@ -60,6 +60,7 @@ def main(args: Namespace) -> None:
             log_steps=args.log_steps,
             minimize=False,
             precision=args.precision,
+            trials_path=resume_path,
             expt_name=TUNE_EXPT_NAME,
         )
 
@@ -122,8 +123,8 @@ if __name__ == "__main__":
         help="Step interval (within an epoch) for logging training metrics",
     )
     parser.add_argument(
-        "--ckpt-path",
+        "--resume-path",
         type=Path,
-        help="Path to the checkpoint from where to continue training",
+        help="Path to the checkpoint/trials file from where to continue",
     )
     main(parser.parse_args())
