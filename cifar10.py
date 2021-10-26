@@ -10,7 +10,6 @@ from src.models import ResNet
 from src.tasks import get_cifar10
 from src.training import train
 from src.tuning import tune_hparams
-from src.utils import set_seed
 
 # The modes that the user can choose through the CLI
 _TRAIN_MODE: Final = "train"
@@ -24,7 +23,6 @@ TUNE_EXPT_NAME: Final = "cifar10-tuning"
 def main(args: Namespace) -> None:
     """Run the main program."""
     config = load_config(args.config)
-    set_seed(config.seed)
     train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
 
     log_dir = args.log_dir.expanduser()

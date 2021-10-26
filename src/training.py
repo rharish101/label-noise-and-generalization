@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import torch
-from pytorch_lightning import Trainer
+from pytorch_lightning import Trainer, seed_everything
 from torch.utils.data import Dataset
 
 from .config import Config
@@ -66,6 +66,9 @@ def train(
         precision = max(precision, 32)  # allow 64-bit precision
     else:
         precision = precision
+
+    # Set seeds for model and also across all dataloader workers
+    seed_everything(config.seed, workers=True)
 
     trainer = Trainer(
         resume_from_checkpoint=ckpt_path,

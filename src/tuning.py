@@ -101,6 +101,7 @@ def tune_hparams(
             trials = pickle.load(trials_file)
 
     space = get_hparam_space(config)
+    rng = np.random.RandomState(config.seed)
 
     # To skip saving the pickle file for previously-completed iterations
     evals_done = len(trials.results)
@@ -114,6 +115,7 @@ def tune_hparams(
             # `tuning_iter` iterations
             max_evals=tuning_iter + 1,
             show_progressbar=False,
+            rstate=rng,
         )
         with open(trials_path, "wb") as trials_file:
             pickle.dump(trials, trials_file)
