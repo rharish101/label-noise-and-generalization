@@ -23,6 +23,10 @@ class ResNet(BaseModel):
         super().__init__(config, nn.CrossEntropyLoss())
         self.model = resnet18()
 
+        for param in self.model.parameters():
+            if len(param.shape) >= 2:
+                nn.init.kaiming_normal_(param)
+
     def forward(self, img: Tensor) -> Tensor:
         """Get the inference output."""
         return self.model(img)
