@@ -11,7 +11,7 @@ from .config import Config
 
 # Bounds for learning rate tuning
 _MIN_LR: Final = math.log(1e-6)
-_MAX_LR: Final = math.log(10)
+_MAX_LR: Final = math.log(1)
 
 # Bound for maximum iterations of the scheduler
 _MAX_SCHED_ITER_LIMIT: Final = int(1e5)
