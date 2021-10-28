@@ -4,11 +4,43 @@ from typing import Dict, Optional
 
 import torch
 from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.trainer.connectors.logger_connector import (
+    LoggerConnector,
+)
 from torch.utils.data import Dataset
 
 from .config import Config
 from .models import BaseModel
 from .utils import get_dataloader, get_logger
+
+
+class _ZeroIdxLoggerConnector(LoggerConnector):
+    """Logger connector that treats global step as zero-indexed."""
+
+    @property
+    def should_update_logs(self) -> bool:
+        should_log_every_n_steps = (
+            self.trainer.global_step % self.trainer.log_every_n_steps == 0
+        )
+        return should_log_every_n_steps or self.trainer.should_stop
+
+
+class _CustomTrainer(Trainer):
+    """Trainer that treats global step as zero-indexed during logging."""
+
+    def __init__(self, *args, **kwargs):
+        """Override the logger connector with `_ZeroIdxLoggerConnector`."""
+        self._logger_connector = _ZeroIdxLoggerConnector(self)
+        super().__init__(*args, **kwargs)
+
+    @property
+    def logger_connector(self) -> _ZeroIdxLoggerConnector:
+        """Get the logger connector."""
+        return self._logger_connector
+
+    @logger_connector.setter
+    def logger_connector(self, connector: LoggerConnector):
+        """Prevent the super class from overriding the logger connector."""
 
 
 def train(
@@ -70,7 +102,7 @@ def train(
     # Set seeds for model and also across all dataloader workers
     seed_everything(config.seed, workers=True)
 
-    trainer = Trainer(
+    trainer = _CustomTrainer(
         resume_from_checkpoint=ckpt_path,
         max_epochs=config.max_epochs,
         logger=logger,
