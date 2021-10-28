@@ -111,6 +111,8 @@ def train(
         auto_select_gpus=num_gpus != 0,
         precision=precision,
     )
+    # For validation metrics at initialization
+    trainer.validate(model, val_loader)
     trainer.fit(model, train_loader, val_loader)
     metrics = trainer.validate(model, val_loader)[0]
     return metrics
