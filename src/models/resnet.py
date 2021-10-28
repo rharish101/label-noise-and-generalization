@@ -54,6 +54,7 @@ class ResNet(BaseModel):
             pred_lbl = logits.argmax(-1)
             acc = (pred_lbl == lbl).float().mean()
             self.log(f"{self.TRAIN_PREFIX}/{self.ACC_TAG}", acc)
+            self.log_misc()
             self.log_curvature_metrics(img, lbl, train=True)
 
         return loss

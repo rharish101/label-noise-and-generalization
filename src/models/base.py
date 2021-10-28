@@ -30,6 +30,7 @@ class BaseModel(LightningModule, ABC):
     LOSS_TAG: Final = "loss"
     GRAD_NORM_TAG: Final = "gradient_norm"  # norm of gradient
     WT_UPDATE_NORM_TAG: Final = "weight_update_norm"  # ||W_{n+1} - W_n||
+    LR_TAG: Final = "learning_rate"
 
     # Tags for logging eigenvalues of the (stochastic) Hessian
     HESS_EV_FMT: Final = "hessian_eigenvalue_{}"  # To format with `.format()`
@@ -84,6 +85,10 @@ class BaseModel(LightningModule, ABC):
             torch.stack(update_norms),
             global_step=self.global_step,
         )
+
+    def log_misc(self) -> None:
+        """Log miscellaneous metrics."""
+        self.log(f"{self.LR_TAG}", self.lr_schedulers().get_last_lr()[0])
 
     def log_curvature_metrics(
         self, inputs: Tensor, targets: Tensor, train: bool = False
