@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import Callable, Tuple
 
-from torch import Tensor
+from torch import Generator, Tensor
 from torch.utils.data import Dataset, Subset, random_split
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
@@ -61,7 +61,9 @@ def get_cifar10(
 
     val_len = int(config.val_split * len(train))
     train_idxs, val_idxs = random_split(
-        range(len(train)), [len(train) - val_len, val_len]
+        range(len(train)),
+        [len(train) - val_len, val_len],
+        generator=Generator().manual_seed(config.seed),
     )
     train = Subset(train, train_idxs)
     val = Subset(val, val_idxs)
