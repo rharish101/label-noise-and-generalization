@@ -1,7 +1,7 @@
 """Utilities for tuning hyper-parameters."""
 import pickle
 from pathlib import Path
-from typing import Callable, Dict, Optional, cast
+from typing import Any, Callable, Dict, Optional, cast
 
 import numpy as np
 import yaml
@@ -19,6 +19,16 @@ from .utils import get_timestamp
 BEST_CONFIG_FILE: Final = "best-hparams.yaml"
 # Where to save the pickle file for hyperopt's progress
 TRIALS_FILE: Final = "trials.pkl"
+
+
+def _np_to_py(hparams: Dict[str, Any]) -> None:
+    """Convert numpy dtypes to Python built-in types.
+
+    Note that this changes the input dictionary in-place.
+    """
+    for name, value in hparams.items():
+        if isinstance(value, np.int64):
+            hparams[name] = int(value)
 
 
 def tune_hparams(
@@ -71,12 +81,9 @@ def tune_hparams(
     if run_name is None:
         run_name = get_timestamp()
 
-    def objective(tuning_iter: int, args: Dict[str, float]) -> float:
-        for hparam in args:
-            if isinstance(hparam, np.int64):
-                args[hparam] = int(args[hparam])
-
-        new_config = update_config(config, args)
+    def objective(tuning_iter: int, hparams: Dict[str, Any]) -> float:
+        _np_to_py(hparams)
+        new_config = update_config(config, hparams)
         model = model_fn(config)
 
         metrics = train(
@@ -124,11 +131,9 @@ def tune_hparams(
         with open(trials_path, "wb") as trials_file:
             pickle.dump(trials, trials_file)
 
-    best_args = space_eval(space, best_hparams)
-    for hparam in best_args:
-        if isinstance(hparam, np.int64):
-            best_args[hparam] = int(best_args[hparam])
-    best_config = update_config(config, best_args)
+    best_hparams = space_eval(space, best_hparams)
+    _np_to_py(best_hparams)
+    best_config = update_config(config, best_hparams)
 
     with open(
         log_dir / expt_name / run_name / BEST_CONFIG_FILE, "w"
