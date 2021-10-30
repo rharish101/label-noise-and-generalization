@@ -118,6 +118,8 @@ class BaseModel(LightningModule, ABC):
         """Return the requested optimizer and LR scheduler."""
         optim = get_optim(self.parameters(), self.config)
         scheduler = CosineAnnealingLR(
-            optim, T_max=self.config.max_sched_iter, eta_min=self.config.min_lr
+            optim,
+            T_max=self.config.max_sched_epochs,
+            eta_min=self.config.min_lr,
         )
         return {"optimizer": optim, "lr_scheduler": scheduler}

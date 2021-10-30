@@ -16,7 +16,7 @@ class Config:
         optim: The choice of optimizer (must be one of adam/rmsprop/sgd)
         lr: The learning rate for the optimizer
         min_lr: The minimum learning rate for the learning rate scheduler
-        max_sched_iter: The maximum iterations for the learning rate scheduler
+        max_sched_epochs: The maximum epochs for the learning rate scheduler
         momentum: The momentum parameter
         adaptivity: The adaptivity parameter
         weight_decay: The L2 weight decay for the optimizer
@@ -31,7 +31,7 @@ class Config:
     optim: str = "adam"
     lr: float = 1e-4
     min_lr: float = 1e-5
-    max_sched_iter: int = int(3e4)
+    max_sched_epochs: int = 10
     momentum: float = 0.9
     adaptivity: float = 0.999
     weight_decay: float = 2e-5
