@@ -4,6 +4,7 @@ from typing import Dict, Optional
 
 import torch
 from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.plugins import DDPPlugin
 from pytorch_lightning.trainer.connectors.logger_connector import (
     LoggerConnector,
 )
@@ -109,6 +110,7 @@ def train(
         gpus=num_gpus,
         auto_select_gpus=num_gpus != 0,
         accelerator="ddp",
+        plugins=[DDPPlugin(find_unused_parameters=False)],
         precision=precision,
     )
     # For validation metrics at initialization
