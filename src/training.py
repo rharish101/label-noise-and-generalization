@@ -54,7 +54,7 @@ def train(
     log_steps: int,
     precision: int = 16,  # Use automatic mixed-precision training
     expt_name: str = "default",
-    version: Optional[str] = None,
+    run_name: Optional[str] = None,
     ckpt_path: Optional[Path] = None,
 ) -> Dict[str, float]:
     """Train the requested model on the requested dataset.
@@ -71,10 +71,9 @@ def train(
         log_steps: The step interval within an epoch for logging
         precision: The floating-point precision to use for training the model
         expt_name: The name for the experiment
-        version: The name for the version of this training run (None to use a
-            timestamp)
+        run_name: The name for this training run (None to use a timestamp)
         ckpt_path: The path to the checkpoint file to resume from (None to
-            train from scratch). This overrides `expt_name` and `version`.
+            train from scratch). This overrides `expt_name` and `run_name`.
 
     Returns:
         The metrics for validation at the end of the model
@@ -85,12 +84,12 @@ def train(
     val_loader = get_dataloader(val_dataset, config, num_workers)
 
     # Assuming that the path follows the folder stucture:
-    # log_dir/expt_name/version/checkpoints/ckpt_file
+    # log_dir/expt_name/run_name/checkpoints/ckpt_file
     if ckpt_path is not None:
-        version = ckpt_path.parent.parent.name
+        run_name = ckpt_path.parent.parent.name
         expt_name = ckpt_path.parent.parent.parent.name
 
-    logger = get_logger(log_dir, expt_name=expt_name, version=version)
+    logger = get_logger(log_dir, expt_name=expt_name, run_name=run_name)
     logger.log_hyperparams(vars(config))
 
     # Detect if we're using CPUs, because there's no AMP on CPUs

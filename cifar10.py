@@ -44,6 +44,7 @@ def main(args: Namespace) -> None:
             precision=args.precision,
             ckpt_path=resume_path,
             expt_name=TRAIN_EXPT_NAME,
+            run_name=args.run_name,
         )
     else:
         tune_hparams(
@@ -60,6 +61,7 @@ def main(args: Namespace) -> None:
             precision=args.precision,
             trials_path=resume_path,
             expt_name=TUNE_EXPT_NAME,
+            run_name=args.run_name,
         )
 
 
@@ -119,6 +121,11 @@ if __name__ == "__main__":
         type=int,
         default=50,
         help="Step interval (within an epoch) for logging training metrics",
+    )
+    parser.add_argument(
+        "--run-name",
+        type=str,
+        help="The name for this run (None to use a timestamp)",
     )
     parser.add_argument(
         "--resume-path",

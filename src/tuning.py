@@ -1,7 +1,7 @@
 """Utilities for tuning hyper-parameters."""
 import pickle
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, cast
 
 import numpy as np
 import yaml
@@ -34,6 +34,7 @@ def tune_hparams(
     minimize: bool = True,
     precision: int = 16,  # Use automatic mixed-precision training
     expt_name: str = "tuning",
+    run_name: Optional[str] = None,
     trials_path: Optional[Path] = None,
 ) -> Config:
     """Tune hyper-params and return the best config.
@@ -52,20 +53,23 @@ def tune_hparams(
         minimize: Whether the metric is to be minimzed or maximized
         precision: The floating-point precision to use for training the model
         expt_name: The name for the experiment
+        run_name: The name for this tuning run (None to use a timestamp)
         trials_path: The path to the pickled trials file to resume tuning from
-            (None to tune from scratch). This overrides `expt_name`.
+            (None to tune from scratch). This overrides `expt_name` and
+            `run_name`.
 
     Returns:
         The metrics for validation at the end of the model
     """
     # The log directory stucture should be as follows:
-    # log_dir/expt_name/timestamp/eval-{num}/
-    # The trials pickle should be at: log_dir/expt_name/timestamp/trials_pkl
-    if trials_path is None:
-        timestamp = get_timestamp()
-    else:
-        timestamp = trials_path.parent.name
+    # log_dir/expt_name/run_name/eval-{num}/
+    # The trials pickle should be at: log_dir/expt_name/run_name/trials_pkl
+    if trials_path is not None:
+        run_name = trials_path.parent.name
         expt_name = trials_path.parent.parent.name
+
+    if run_name is None:
+        run_name = get_timestamp()
 
     def objective(tuning_iter: int, args: Dict[str, float]) -> float:
         for hparam in args:
@@ -85,8 +89,9 @@ def tune_hparams(
             log_dir=log_dir / expt_name,
             log_steps=log_steps,
             precision=precision,
-            expt_name=timestamp,  # Keep all logs inside this directory
-            version=f"eval-{tuning_iter}",
+            # Cast needed due to: https://github.com/python/mypy/issues/10993
+            expt_name=cast(str, run_name),  # Keep all logs inside this folder
+            run_name=f"eval-{tuning_iter}",
         )
 
         tuning_iter += 1
@@ -95,7 +100,7 @@ def tune_hparams(
 
     if trials_path is None:
         trials = Trials()
-        trials_path = log_dir / expt_name / timestamp / TRIALS_FILE
+        trials_path = log_dir / expt_name / run_name / TRIALS_FILE
     else:
         with open(trials_path, "rb") as trials_file:
             trials = pickle.load(trials_file)
@@ -127,7 +132,7 @@ def tune_hparams(
     best_config = update_config(config, best_args)
 
     with open(
-        log_dir / expt_name / timestamp / BEST_CONFIG_FILE, "w"
+        log_dir / expt_name / run_name / BEST_CONFIG_FILE, "w"
     ) as best_config_file:
         yaml.dump(vars(best_config), best_config_file)
 

@@ -64,20 +64,20 @@ def get_timestamp() -> str:
 def get_logger(
     log_dir: Path,
     expt_name: str = "default",
-    version: Optional[str] = None,
+    run_name: Optional[str] = None,
 ) -> LightningLoggerBase:
     """Get a logger.
 
     Args:
         log_dir: The path to the directory where all logs are to be stored
         expt_name: The name for the experiment
-        version: The name for this version/instance of the experiment
+        run_name: The name for this run of the experiment
 
     Returns:
         The requested logger
     """
-    if version is None:
-        version = get_timestamp()
+    if run_name is None:
+        run_name = get_timestamp()
     return TensorBoardLogger(
-        log_dir, name=expt_name, version=version, default_hp_metric=False
+        log_dir, name=expt_name, version=run_name, default_hp_metric=False
     )
