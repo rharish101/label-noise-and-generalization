@@ -94,7 +94,6 @@ def tune_hparams(
             run_name=f"eval-{tuning_iter}",
         )
 
-        tuning_iter += 1
         metric = metrics[f"{model.VAL_PREFIX}/{objective_tag}"]
         return metric if minimize else -metric
 
