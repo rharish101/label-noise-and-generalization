@@ -27,16 +27,16 @@ class Config:
         seed: The global random seed (for reproducibility)
     """
 
-    batch_size: int = 64
+    batch_size: int = 128
     optim: str = "adam"
     lr: float = 1e-4
-    min_lr: float = 1e-5
-    max_sched_epochs: int = 10
+    min_lr: float = 0.0
+    max_sched_epochs: int = 40
     momentum: float = 0.9
     adaptivity: float = 0.999
-    weight_decay: float = 2e-5
-    max_epochs: int = 10
-    max_tuning_evals: int = 20
+    weight_decay: float = 5e-4
+    max_epochs: int = 40
+    max_tuning_evals: int = 40
     lbl_noise: float = 0.0
     val_split: float = 0.2
     seed: int = 0
