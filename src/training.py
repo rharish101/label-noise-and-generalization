@@ -109,6 +109,7 @@ def train(
         log_every_n_steps=log_steps,
         gpus=num_gpus,
         auto_select_gpus=num_gpus != 0,
+        accelerator="ddp",
         precision=precision,
     )
     # For validation metrics at initialization
