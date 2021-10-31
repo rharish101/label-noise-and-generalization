@@ -116,7 +116,7 @@ def train(
         precision=precision,
     )
     # For validation metrics at initialization
-    trainer.validate(model, datamodule=datamodule)
+    trainer.validate(model, datamodule=datamodule, verbose=False)
     trainer.fit(model, datamodule=datamodule)
     metrics = trainer.validate(model, datamodule=datamodule)[0]
     return metrics
