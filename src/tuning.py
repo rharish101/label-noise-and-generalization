@@ -21,16 +21,6 @@ BEST_CONFIG_FILE: Final = "best-hparams.yaml"
 TRIALS_FILE: Final = "trials.pkl"
 
 
-def _np_to_py(hparams: Dict[str, Any]) -> None:
-    """Convert numpy dtypes to Python built-in types.
-
-    Note that this changes the input dictionary in-place.
-    """
-    for name, value in hparams.items():
-        if isinstance(value, np.int64):
-            hparams[name] = int(value)
-
-
 def tune_hparams(
     model_fn: Callable[[Config], BaseModel],
     train_dataset: Dataset,
@@ -82,7 +72,6 @@ def tune_hparams(
         run_name = get_timestamp()
 
     def objective(tuning_iter: int, hparams: Dict[str, Any]) -> float:
-        _np_to_py(hparams)
         new_config = update_config(config, hparams)
         model = model_fn(config)
 
@@ -132,7 +121,6 @@ def tune_hparams(
             pickle.dump(trials, trials_file)
 
     best_hparams = space_eval(space, best_hparams)
-    _np_to_py(best_hparams)
     best_config = update_config(config, best_hparams)
 
     with open(
