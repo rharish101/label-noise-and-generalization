@@ -6,9 +6,6 @@ from typing import Optional
 
 import torch
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
-from torch.utils.data import DataLoader, Dataset
-
-from .config import Config
 
 
 class RandomLabelNoise(torch.nn.Module):
@@ -30,30 +27,6 @@ class RandomLabelNoise(torch.nn.Module):
         if random.random() < self.noise_prob:
             lbl = random.randrange(self.num_classes)
         return lbl
-
-
-def get_dataloader(
-    dataset: Dataset, config: Config, num_workers: int, shuffle: bool = False
-) -> DataLoader:
-    """Get a dataloader for the dataset.
-
-    Args:
-        dataset: The dataset object
-        config: The hyper-param config
-        num_workers: The number of workers to use for loading/processing the
-            dataset items
-        shuffle: Whether to shuffle the items every epoch before iterating
-
-    Returns:
-        The data loader object for the dataset
-    """
-    return DataLoader(
-        dataset,
-        batch_size=config.batch_size,
-        num_workers=num_workers,
-        shuffle=shuffle,
-        pin_memory=True,
-    )
 
 
 def get_timestamp() -> str:

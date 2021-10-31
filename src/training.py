@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import torch
-from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning import LightningDataModule, Trainer, seed_everything
 from pytorch_lightning.plugins import DDPPlugin
 from pytorch_lightning.trainer.connectors.logger_connector import (
     LoggerConnector,
@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 
 from .config import Config
 from .models import BaseModel
-from .utils import get_dataloader, get_logger
+from .utils import get_logger
 
 
 class _ZeroIdxLoggerConnector(LoggerConnector):
@@ -79,10 +79,12 @@ def train(
     Returns:
         The metrics for validation at the end of the model
     """
-    train_loader = get_dataloader(
-        train_dataset, config, num_workers, shuffle=True
+    datamodule = LightningDataModule.from_datasets(
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
+        batch_size=config.batch_size,
+        num_workers=num_workers,
     )
-    val_loader = get_dataloader(val_dataset, config, num_workers)
 
     # Assuming that the path follows the folder stucture:
     # log_dir/expt_name/run_name/checkpoints/ckpt_file
@@ -114,7 +116,7 @@ def train(
         precision=precision,
     )
     # For validation metrics at initialization
-    trainer.validate(model, val_loader)
-    trainer.fit(model, train_loader, val_loader)
-    metrics = trainer.validate(model, val_loader)[0]
+    trainer.validate(model, datamodule=datamodule)
+    trainer.fit(model, datamodule=datamodule)
+    metrics = trainer.validate(model, datamodule=datamodule)[0]
     return metrics
