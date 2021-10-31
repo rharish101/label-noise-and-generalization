@@ -60,7 +60,6 @@ def get_hparam_space(config: Config):
     """Get the hyper-param tuning space for the given config."""
     space = {
         "lr": hp.loguniform("lr", _MIN_LR, _MAX_LR),
-        "min_lr": hp.loguniform("min_lr", _MIN_LR, _MAX_LR),
         "momentum": hp.uniform("momentum", 0, 1),
         "adaptivity": hp.uniform("adaptivity", 0, 1),
     }

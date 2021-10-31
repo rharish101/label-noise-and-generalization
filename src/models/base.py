@@ -7,7 +7,7 @@ from pyhessian import hessian
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import Module
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import OneCycleLR
 from typing_extensions import Final
 
 from ..config import Config
@@ -114,10 +114,38 @@ class BaseModel(LightningModule, ABC):
                 f"{mode_tag}/{self.HESS_EV_FMT}".format(i), hessian_evs[i]
             )
 
+    def _get_training_steps(self) -> int:
+        """Get the total number of training steps.
+
+        Source:
+        https://github.com/PyTorchLightning/pytorch-lightning/issues/5449#issuecomment-774265729
+        """
+        if self.trainer.max_steps:
+            return self.trainer.max_steps
+
+        limit_batches = self.trainer.limit_train_batches
+        batches = len(self.trainer.datamodule.train_dataloader())
+        if isinstance(limit_batches, int):
+            batches = min(batches, limit_batches)
+        else:
+            batches = int(limit_batches * batches)
+
+        num_devices = max(1, self.trainer.num_gpus, self.trainer.num_processes)
+        if self.trainer.tpu_cores:
+            num_devices = max(num_devices, self.trainer.tpu_cores)
+
+        effective_accum = self.trainer.accumulate_grad_batches * num_devices
+        return (batches // effective_accum) * self.trainer.max_epochs
+
     def configure_optimizers(self) -> Dict[str, Any]:
         """Return the requested optimizer and LR scheduler."""
         optim = get_optim(self.parameters(), self.config)
-        scheduler = CosineAnnealingLR(
-            optim, T_max=self.config.max_epochs, eta_min=self.config.min_lr
+        scheduler = OneCycleLR(
+            optim,
+            max_lr=self.config.lr,
+            total_steps=self._get_training_steps(),
         )
-        return {"optimizer": optim, "lr_scheduler": scheduler}
+        return {
+            "optimizer": optim,
+            "lr_scheduler": {"scheduler": scheduler, "interval": "step"},
+        }
