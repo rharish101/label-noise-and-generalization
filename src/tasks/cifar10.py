@@ -9,7 +9,7 @@ from torchvision.datasets import CIFAR10
 from typing_extensions import Final
 
 from ..config import Config
-from ..utils import RandomLabelNoise
+from ..utils import LabelNoiseDataset
 
 NUM_CLASSES: Final = 10
 
@@ -52,11 +52,9 @@ def get_cifar10(
         The test dataset
     """
     train = CIFAR10(
-        data_dir,
-        download=True,
-        transform=get_transform(train=True),
-        target_transform=RandomLabelNoise(config, 10),
+        data_dir, download=True, transform=get_transform(train=True)
     )
+    train = LabelNoiseDataset(train, config, num_classes=NUM_CLASSES)
     val = CIFAR10(data_dir, download=True, transform=get_transform())
 
     val_len = int(config.val_split * len(train))
