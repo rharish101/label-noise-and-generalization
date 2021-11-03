@@ -7,25 +7,28 @@ from typing import Optional
 import torch
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
 
+from .config import Config
+
 
 class RandomLabelNoise(torch.nn.Module):
     """Class for randomly adding label noise."""
 
-    def __init__(self, p: float, num_classes: int):
+    def __init__(self, config: Config, num_classes: int):
         """Store parameters.
 
         Args:
-            p: The probability of changing the label
+            config: The hyper-param config
             num_classes: The total number of classes in the dataset
         """
         super().__init__()
-        self.noise_prob = p
+        self.config = config
         self.num_classes = num_classes
+        self.rng = random.Random(config.seed)
 
     def forward(self, lbl: int) -> int:
         """Randomly flip the label."""
-        if random.random() < self.noise_prob:
-            lbl = random.randrange(self.num_classes)
+        if self.rng.random() < self.config.lbl_noise:
+            lbl = self.rng.randrange(self.num_classes)
         return lbl
 
 

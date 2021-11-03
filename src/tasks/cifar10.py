@@ -55,7 +55,7 @@ def get_cifar10(
         data_dir,
         download=True,
         transform=get_transform(train=True),
-        target_transform=RandomLabelNoise(config.lbl_noise, 10),
+        target_transform=RandomLabelNoise(config, 10),
     )
     val = CIFAR10(data_dir, download=True, transform=get_transform())
 
