@@ -57,10 +57,17 @@ class LabelNoiseDataset(Dataset):
         else:
             raise ValueError(f"Invalid noise type {self.config.noise_type}")
 
-    def __getitem__(self, idx: int) -> Tuple[Any, int]:
-        """Get the data point at the given index."""
+    def __getitem__(self, idx: int) -> Tuple[Any, int, bool]:
+        """Get the data point at the given index.
+
+        Returns:
+            The input data
+            The target label
+            Whether the label was changed
+        """
         data, lbl = self.dataset[idx]
-        return data, self._add_lbl_noise(lbl, idx)
+        new_lbl = self._add_lbl_noise(lbl, idx)
+        return data, new_lbl, new_lbl != lbl
 
 
 def get_timestamp() -> str:

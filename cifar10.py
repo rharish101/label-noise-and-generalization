@@ -53,7 +53,7 @@ def main(args: Namespace) -> None:
             train_dataset,
             val_dataset,
             config,
-            objective_tag=ResNet.ACC_TAG,
+            objective_tag=ResNet.ACC_TOTAL_TAG,
             num_gpus=args.num_gpus,
             num_workers=args.num_workers,
             log_dir=log_dir,
