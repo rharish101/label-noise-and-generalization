@@ -73,7 +73,7 @@ def tune_hparams(
 
     def objective(tuning_iter: int, hparams: Dict[str, Any]) -> float:
         new_config = update_config(config, hparams)
-        model = model_fn(config)
+        model = model_fn(new_config)
 
         metrics = train(
             model,
