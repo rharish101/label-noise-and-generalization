@@ -84,6 +84,7 @@ def tune_hparams(
             num_workers=num_workers,
             log_dir=log_dir / expt_name,
             log_steps=log_steps,
+            disable_curvature_logging=True,
             precision=precision,
             # Cast needed due to: https://github.com/python/mypy/issues/10993
             expt_name=cast(str, run_name),  # Keep all logs inside this folder

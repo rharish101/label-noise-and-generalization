@@ -40,6 +40,7 @@ class BaseModel(LightningModule, ABC):
         super().__init__()
         self.config = config
         self.loss_fn = loss_fn
+        self.disable_curvature_logging = False  # Can be changed later
 
         # Used for logging weight update norms
         self._prev_weights: Dict[str, Tensor] = {}
@@ -104,6 +105,9 @@ class BaseModel(LightningModule, ABC):
             targets: The batch of targets for the model
             train: Whether this is the training phase
         """
+        if self.disable_curvature_logging:
+            return
+
         hessian_comp = hessian(
             self,
             self.loss_fn,
