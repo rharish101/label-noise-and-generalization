@@ -1,10 +1,11 @@
 """Utilities for various optimizers."""
 import math
-from typing import Iterable
+from typing import Any, Dict, Iterable, Optional
 
 from hyperopt import hp
 from torch import Tensor
 from torch.optim import SGD, Adam, Optimizer
+from torch.optim.lr_scheduler import CosineAnnealingLR, OneCycleLR
 from typing_extensions import Final
 
 from .config import Config
@@ -54,6 +55,46 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
         betas=[momentum, adaptivity],
         weight_decay=config.weight_decay,
     )
+
+
+def get_lr_scheduler(
+    optim: Optimizer, config: Config, steps_per_epoch: Optional[int] = None
+) -> Optional[Dict[str, Any]]:
+    """Choose a learning rate scheduler according to the config.
+
+    The available schedulers are:
+        "cos": CosineAnnealingLR
+        "1clr": OneCycleLR (https://arxiv.org/abs/1708.07120)
+        "none": No scheduler
+
+    Args:
+        optim: The optimizer
+        config: The hyper-param config
+        steps_per_epoch: The steps per training epoch (needed for the one cycle
+            lr scheduler)
+
+    Returns:
+        The requested scheduler config, as per the hyper-param config
+    """
+    if config.sched == "none":
+        return None
+
+    sched_config = {}
+    if config.sched == "cos":
+        sched_config["scheduler"] = CosineAnnealingLR(
+            optim, T_max=config.max_epochs
+        )
+    elif config.sched == "1clr":
+        sched_config["scheduler"] = OneCycleLR(
+            optim,
+            max_lr=config.lr,
+            epochs=config.max_epochs,
+            steps_per_epoch=steps_per_epoch,
+        )
+        sched_config["interval"] = "step"
+    else:
+        raise ValueError(f"Invalid scheduler {config.sched}")
+    return sched_config
 
 
 def get_hparam_space(config: Config):

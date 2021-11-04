@@ -7,11 +7,10 @@ from pyhessian import hessian
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import Module
-from torch.optim.lr_scheduler import OneCycleLR
 from typing_extensions import Final
 
 from ..config import Config
-from ..optimizers import get_optim
+from ..optimizers import get_lr_scheduler, get_optim
 
 
 class BaseModel(LightningModule, ABC):
@@ -88,7 +87,12 @@ class BaseModel(LightningModule, ABC):
 
     def log_misc(self) -> None:
         """Log miscellaneous metrics."""
-        self.log(f"{self.LR_TAG}", self.lr_schedulers().get_last_lr()[0])
+        lr_schedulers = self.lr_schedulers()
+        if lr_schedulers is not None:
+            lr = lr_schedulers.get_last_lr()[0]
+        else:
+            lr = self.config.lr
+        self.log(f"{self.LR_TAG}", lr)
 
     def log_curvature_metrics(
         self, inputs: Tensor, targets: Tensor, train: bool = False
@@ -114,8 +118,8 @@ class BaseModel(LightningModule, ABC):
                 f"{mode_tag}/{self.HESS_EV_FMT}".format(i), hessian_evs[i]
             )
 
-    def _get_training_steps(self) -> int:
-        """Get the total number of training steps.
+    def _get_steps_per_epoch(self) -> int:
+        """Get the total number of training steps per epoch.
 
         Source:
         https://github.com/PyTorchLightning/pytorch-lightning/issues/5449#issuecomment-774265729
@@ -135,17 +139,15 @@ class BaseModel(LightningModule, ABC):
             num_devices = max(num_devices, self.trainer.tpu_cores)
 
         effective_accum = self.trainer.accumulate_grad_batches * num_devices
-        return (batches // effective_accum) * self.trainer.max_epochs
+        return batches // effective_accum
 
     def configure_optimizers(self) -> Dict[str, Any]:
         """Return the requested optimizer and LR scheduler."""
         optim = get_optim(self.parameters(), self.config)
-        scheduler = OneCycleLR(
-            optim,
-            max_lr=self.config.lr,
-            total_steps=self._get_training_steps(),
+        sched_config = get_lr_scheduler(
+            optim, self.config, steps_per_epoch=self._get_steps_per_epoch()
         )
-        return {
-            "optimizer": optim,
-            "lr_scheduler": {"scheduler": scheduler, "interval": "step"},
-        }
+        if sched_config is None:
+            return optim
+        else:
+            return {"optimizer": optim, "lr_scheduler": sched_config}

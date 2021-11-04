@@ -13,6 +13,7 @@ class Config:
     Attributes:
         batch_size: The batch size for training
         optim: The choice of optimizer (must be one of adam/rmsprop/sgd)
+        sched: The choice of scheduler (must be one of cos/1clr/none)
         lr: The maximum learning rate for the 1cycle scheduler
         momentum: The momentum parameter
         adaptivity: The adaptivity parameter
@@ -26,6 +27,7 @@ class Config:
 
     batch_size: int = 128
     optim: str = "adam"
+    sched: str = "1clr"
     lr: float = 1e-4
     momentum: float = 0.9
     adaptivity: float = 0.999
