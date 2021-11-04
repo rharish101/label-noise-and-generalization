@@ -107,7 +107,7 @@ def tune_hparams(
     # To skip saving the pickle file for previously-completed iterations
     evals_done = len(trials.results)
     for tuning_iter in range(evals_done, config.max_tuning_evals):
-        best_hparams = fmin(
+        fmin(
             lambda args: objective(tuning_iter, args),
             space,
             algo=tpe.suggest,
@@ -121,7 +121,7 @@ def tune_hparams(
         with open(trials_path, "wb") as trials_file:
             pickle.dump(trials, trials_file)
 
-    best_hparams = space_eval(space, best_hparams)
+    best_hparams = space_eval(space, trials.argmin)
     best_config = update_config(config, best_hparams)
 
     with open(
