@@ -23,25 +23,44 @@ class LabelNoiseDataset(Dataset):
         """
         super().__init__()
         self.dataset = dataset
+        self.config = config
 
-        num_corrupted_labels = int(config.lbl_noise * len(dataset))
-        rng = random.Random(config.seed)
-        _labels_to_corrupt = rng.sample(
-            range(len(dataset)), num_corrupted_labels
-        )
-        self.corrupted_labels = {
-            idx: rng.randrange(num_classes) for idx in _labels_to_corrupt
-        }
+        if self.config.noise_type == "static":
+            num_corrupted_labels = int(config.lbl_noise * len(dataset))
+            rng = random.Random(config.seed)
+            _labels_to_corrupt = rng.sample(
+                range(len(dataset)), num_corrupted_labels
+            )
+            self.corrupted_labels = {
+                idx: rng.randrange(num_classes) for idx in _labels_to_corrupt
+            }
+        elif self.config.noise_type == "dynamic":
+            self.num_classes = num_classes
+            self.rng = random.Random(config.seed)
+        else:
+            raise ValueError(f"Invalid noise type {self.config.noise_type}")
 
     def __len__(self) -> int:
         """Return the length of the original dataset."""
         return len(self.dataset)
 
+    def _add_lbl_noise(self, lbl: int, idx: int) -> int:
+        """Add label noise if needed to the label at the given index."""
+        if self.config.noise_type == "static":
+            # If this index doesn't have a corrupted label, use the original
+            return self.corrupted_labels.get(idx, lbl)
+        elif self.config.noise_type == "dynamic":
+            if self.rng.random() < self.config.lbl_noise:
+                return self.rng.randrange(self.num_classes)
+            else:
+                return lbl
+        else:
+            raise ValueError(f"Invalid noise type {self.config.noise_type}")
+
     def __getitem__(self, idx: int) -> Tuple[Any, int]:
         """Get the data point at the given index."""
         data, lbl = self.dataset[idx]
-        # If this index doesn't have a corrupted label, use the original label
-        return data, self.corrupted_labels.get(idx, lbl)
+        return data, self._add_lbl_noise(lbl, idx)
 
 
 def get_timestamp() -> str:

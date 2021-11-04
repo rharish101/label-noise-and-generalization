@@ -21,6 +21,7 @@ class Config:
         max_epochs: The max epochs to train the model
         max_tuning_evals: The max evaluations for tuning the hyper-params
         lbl_noise: The probability of flipping the class label during training
+        noise_type: The type of label noise (must be one of static/dynamic)
         val_split: The fraction of training data to use for validation
         seed: The global random seed (for reproducibility)
     """
@@ -35,6 +36,7 @@ class Config:
     max_epochs: int = 40
     max_tuning_evals: int = 40
     lbl_noise: float = 0.0
+    noise_type: str = "static"
     val_split: float = 0.2
     seed: int = 0
 
