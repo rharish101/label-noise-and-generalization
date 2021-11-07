@@ -46,7 +46,7 @@ def load_config(config_path: Optional[Path]) -> Config:
 
     If the path is None or doesn't exist, then an empty dict is returned.
     """
-    if config_path is not None and config_path.exists():
+    if config_path is not None:
         with open(config_path, "r") as f:
             args = yaml.safe_load(f)
     else:
