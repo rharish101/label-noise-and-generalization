@@ -7,6 +7,7 @@ from pyhessian import hessian
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import Module
+from torch.nn.functional import cosine_similarity
 from typing_extensions import Final
 
 from ..config import Config
@@ -34,6 +35,9 @@ class BaseModel(LightningModule, ABC):
     # Tags for logging eigenvalues of the (stochastic) Hessian
     HESS_EV_FMT: Final = "hessian_eigenvalue_{}"  # To format with `.format()`
     NUM_HESS_EV: Final = 2  # No. of top Hessian eigenvalues to calculate
+
+    # Tag for cosine similarity b/w gradients of clean vs clean+noisy samples
+    NOISE_ALIGN_TAG: Final = "noise_alignment"
 
     def __init__(self, config: Config, loss_fn: Module):
         """Initialize the model."""
@@ -94,6 +98,38 @@ class BaseModel(LightningModule, ABC):
         else:
             lr = self.config.lr
         self.log(f"{self.LR_TAG}", lr)
+
+    def log_noise_alignment(
+        self,
+        inputs: Tensor,
+        targets: Tensor,
+        was_lbl_changed: Tensor,
+        train: bool = False,
+    ) -> None:
+        """Log alignment between gradients of clean+noisy and clean samples.
+
+        Args:
+            inputs: The batch of inputs to the model
+            targets: The batch of targets for the model
+            was_lbl_changed: The batch of booleans denoting if the
+                corresponding targets were changed
+            train: Whether this is the training phase
+        """
+
+        def get_grads(inputs: Tensor, targets: Tensor) -> Tensor:
+            outputs = self.forward(inputs)
+            loss = self.loss_fn(outputs, targets)
+            grads = torch.autograd.grad(loss, self.parameters())
+            return torch.cat([grad.flatten() for grad in grads])
+
+        grads_all = get_grads(inputs, targets)
+        grads_clean = get_grads(
+            inputs[~was_lbl_changed], targets[~was_lbl_changed]
+        )
+        alignment = cosine_similarity(grads_all, grads_clean, dim=0)
+
+        mode_tag = self.TRAIN_PREFIX if train else self.VAL_PREFIX
+        self.log(f"{mode_tag}/{self.NOISE_ALIGN_TAG}", alignment)
 
     def log_curvature_metrics(
         self, inputs: Tensor, targets: Tensor, train: bool = False
