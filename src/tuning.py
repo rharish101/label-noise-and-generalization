@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, Optional, cast
 
 import numpy as np
 import yaml
-from hyperopt import Trials, fmin, space_eval, tpe
+from hyperopt import STATUS_FAIL, STATUS_OK, Trials, fmin, space_eval, tpe
 from torch.utils.data import Dataset
 from typing_extensions import Final
 
@@ -94,6 +94,16 @@ def tune_hparams(
         metric = metrics[f"{model.VAL_PREFIX}/{objective_tag}"]
         return metric if minimize else -metric
 
+    def objective_wrapper(*args, **kwargs) -> Dict[str, Any]:
+        try:
+            loss = objective(*args, **kwargs)
+            status = STATUS_OK
+        except Exception:
+            loss = 0.0
+            status = STATUS_FAIL
+
+        return {"loss": loss, "status": status}
+
     if trials_path is None:
         trials = Trials()
         trials_path = log_dir / expt_name / run_name / TRIALS_FILE
@@ -108,7 +118,7 @@ def tune_hparams(
     evals_done = len(trials.results)
     for tuning_iter in range(evals_done, config.max_tuning_evals):
         fmin(
-            lambda args: objective(tuning_iter, args),
+            lambda args: objective_wrapper(tuning_iter, args),
             space,
             algo=tpe.suggest,
             trials=trials,
