@@ -1,11 +1,12 @@
 """Utilities for tuning hyper-parameters."""
 import pickle
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, cast
 
-import numpy as np
 import yaml
 from hyperopt import STATUS_FAIL, STATUS_OK, Trials, fmin, space_eval, tpe
+from numpy.random import RandomState
 from torch.utils.data import Dataset
 from typing_extensions import Final
 
@@ -19,6 +20,14 @@ from .utils import get_timestamp
 BEST_CONFIG_FILE: Final = "best-hparams.yaml"
 # Where to save the pickle file for hyperopt's progress
 TRIALS_FILE: Final = "trials.pkl"
+
+
+@dataclass
+class _Progress:
+    """Class for saving hyperopt progress."""
+
+    trials: Trials
+    rng: RandomState
 
 
 def tune_hparams(
@@ -106,13 +115,15 @@ def tune_hparams(
 
     if trials_path is None:
         trials = Trials()
+        rng = RandomState(config.seed)
         trials_path = log_dir / expt_name / run_name / TRIALS_FILE
     else:
         with open(trials_path, "rb") as trials_file:
-            trials = pickle.load(trials_file)
+            progress: _Progress = pickle.load(trials_file)
+        trials = progress.trials
+        rng = progress.rng
 
     space = get_hparam_space(config)
-    rng = np.random.RandomState(config.seed)
 
     # To skip saving the pickle file for previously-completed iterations
     evals_done = len(trials.results)
@@ -129,7 +140,7 @@ def tune_hparams(
             rstate=rng,
         )
         with open(trials_path, "wb") as trials_file:
-            pickle.dump(trials, trials_file)
+            pickle.dump(_Progress(trials, rng), trials_file)
 
     best_hparams = space_eval(space, trials.argmin)
     best_config = update_config(config, best_hparams)
