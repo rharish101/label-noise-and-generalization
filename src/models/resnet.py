@@ -51,6 +51,7 @@ class ResNet(BaseModel):
         if batch_idx % self.trainer.log_every_n_steps == 0:
             self.eval()
             self.log_noise_alignment(img, lbl, was_lbl_changed, train=True)
+            self.log_noise_grad_norm(img, lbl, was_lbl_changed, train=True)
 
         self.train()
         logits = self.model(img)

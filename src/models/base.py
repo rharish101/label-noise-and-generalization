@@ -38,6 +38,8 @@ class BaseModel(LightningModule, ABC):
 
     # Tag for cosine similarity b/w gradients of clean vs clean+noisy samples
     NOISE_ALIGN_TAG: Final = "noise_alignment"
+    # Tag for L1 norm of gradients of noisy samples
+    NOISE_NORM_TAG: Final = "noise_norm"
 
     def __init__(self, config: Config, loss_fn: Module):
         """Initialize the model."""
@@ -99,6 +101,12 @@ class BaseModel(LightningModule, ABC):
             lr = self.config.lr
         self.log(f"{self.LR_TAG}", lr)
 
+    def _get_grads(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        outputs = self.forward(inputs)
+        loss = self.loss_fn(outputs, targets)
+        grads = torch.autograd.grad(loss, self.parameters())
+        return torch.cat([grad.flatten() for grad in grads])
+
     def log_noise_alignment(
         self,
         inputs: Tensor,
@@ -115,21 +123,41 @@ class BaseModel(LightningModule, ABC):
                 corresponding targets were changed
             train: Whether this is the training phase
         """
-
-        def get_grads(inputs: Tensor, targets: Tensor) -> Tensor:
-            outputs = self.forward(inputs)
-            loss = self.loss_fn(outputs, targets)
-            grads = torch.autograd.grad(loss, self.parameters())
-            return torch.cat([grad.flatten() for grad in grads])
-
-        grads_all = get_grads(inputs, targets)
-        grads_clean = get_grads(
+        grads_all = self._get_grads(inputs, targets)
+        grads_clean = self._get_grads(
             inputs[~was_lbl_changed], targets[~was_lbl_changed]
         )
         alignment = cosine_similarity(grads_all, grads_clean, dim=0)
 
         mode_tag = self.TRAIN_PREFIX if train else self.VAL_PREFIX
         self.log(f"{mode_tag}/{self.NOISE_ALIGN_TAG}", alignment)
+
+    def log_noise_grad_norm(
+        self,
+        inputs: Tensor,
+        targets: Tensor,
+        was_lbl_changed: Tensor,
+        train: bool = False,
+    ) -> None:
+        """Log L1 norm of gradients noisy samples.
+
+        Args:
+            inputs: The batch of inputs to the model
+            targets: The batch of targets for the model
+            was_lbl_changed: The batch of booleans denoting if the
+                corresponding targets were changed
+            train: Whether this is the training phase
+        """
+        if not was_lbl_changed.any():
+            return
+
+        grads_noisy = self._get_grads(
+            inputs[was_lbl_changed], targets[was_lbl_changed]
+        )
+        norm = torch.linalg.vector_norm(grads_noisy, ord=1)
+
+        mode_tag = self.TRAIN_PREFIX if train else self.VAL_PREFIX
+        self.log(f"{mode_tag}/{self.NOISE_NORM_TAG}", norm)
 
     def log_curvature_metrics(
         self, inputs: Tensor, targets: Tensor, train: bool = False
