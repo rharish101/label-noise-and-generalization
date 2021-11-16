@@ -41,7 +41,7 @@ def main(args: Namespace) -> None:
             num_workers=args.num_workers,
             log_dir=log_dir,
             log_steps=args.log_steps,
-            disable_curvature_logging=args.disable_curvature_logging,
+            disable_extra_logging=args.disable_extra_logging,
             precision=args.precision,
             ckpt_path=resume_path,
             expt_name=TRAIN_EXPT_NAME,
@@ -124,9 +124,9 @@ if __name__ == "__main__":
         help="Step interval (within an epoch) for logging training metrics",
     )
     parser.add_argument(
-        "--disable-curvature-logging",
+        "--disable-extra-logging",
         action="store_true",
-        help="Whether to disable logging metrics for curvature",
+        help="Whether to disable logging extra metrics for faster training",
     )
     parser.add_argument(
         "--run-name",

@@ -53,7 +53,7 @@ def train(
     num_workers: int,
     log_dir: Path,
     log_steps: int,
-    disable_curvature_logging: bool = False,
+    disable_extra_logging: bool = False,
     precision: int = 16,  # Use automatic mixed-precision training
     expt_name: str = "default",
     run_name: Optional[str] = None,
@@ -71,8 +71,8 @@ def train(
             dataset items
         log_dir: The path to the directory where all logs are to be stored
         log_steps: The step interval within an epoch for logging
-        disable_curvature_logging: Whether to disable logging metrics for
-            curvature, since their computation is slow
+        disable_extra_logging: Whether to disable logging extra metrics, since
+            their computation is slow
         precision: The floating-point precision to use for training the model
         expt_name: The name for the experiment
         run_name: The name for this training run (None to use a timestamp)
@@ -97,7 +97,7 @@ def train(
 
     logger = get_logger(log_dir, expt_name=expt_name, run_name=run_name)
     logger.log_hyperparams(vars(config))
-    model.disable_curvature_logging = disable_curvature_logging
+    model.disable_extra_logging = disable_extra_logging
 
     # Detect if we're using CPUs, because there's no AMP on CPUs
     if num_gpus == 0 or (num_gpus == -1 and not torch.cuda.is_available()):

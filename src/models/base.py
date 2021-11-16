@@ -46,7 +46,7 @@ class BaseModel(LightningModule, ABC):
         super().__init__()
         self.config = config
         self.loss_fn = loss_fn
-        self.disable_curvature_logging = False  # Can be changed later
+        self.disable_extra_logging = False  # Can be changed later
 
         # Used for logging weight update norms
         self._prev_weights: Dict[str, Tensor] = {}
@@ -123,6 +123,9 @@ class BaseModel(LightningModule, ABC):
                 corresponding targets were changed
             train: Whether this is the training phase
         """
+        if self.disable_extra_logging:
+            return
+
         grads_all = self._get_grads(inputs, targets)
         grads_clean = self._get_grads(
             inputs[~was_lbl_changed], targets[~was_lbl_changed]
@@ -148,7 +151,7 @@ class BaseModel(LightningModule, ABC):
                 corresponding targets were changed
             train: Whether this is the training phase
         """
-        if not was_lbl_changed.any():
+        if self.disable_extra_logging or not was_lbl_changed.any():
             return
 
         grads_noisy = self._get_grads(
@@ -169,7 +172,7 @@ class BaseModel(LightningModule, ABC):
             targets: The batch of targets for the model
             train: Whether this is the training phase
         """
-        if self.disable_curvature_logging:
+        if self.disable_extra_logging:
             return
 
         hessian_comp = hessian(
