@@ -19,6 +19,8 @@ class Config:
         adaptivity: The adaptivity parameter
         weight_decay: The L2 weight decay for the optimizer
         max_epochs: The max epochs to train the model
+        sched_epochs: The total epochs to use for the LR scheduler (
+            negative values imply `max_epochs`)
         max_tuning_evals: The max evaluations for tuning the hyper-params
         lbl_noise: The probability of flipping the class label during training
         noise_type: The type of label noise (must be one of static/dynamic)
@@ -34,6 +36,7 @@ class Config:
     adaptivity: float = 0.999
     weight_decay: float = 5e-4
     max_epochs: int = 40
+    sched_epochs: int = -1
     max_tuning_evals: int = 40
     lbl_noise: float = 0.0
     noise_type: str = "static"

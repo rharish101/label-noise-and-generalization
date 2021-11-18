@@ -1,6 +1,6 @@
 """Utilities for various optimizers."""
 import math
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from hyperopt import hp
 from torch import Tensor
@@ -13,6 +13,20 @@ from .config import Config
 # Bounds for learning rate tuning
 _MIN_LR: Final = math.log(1e-6)
 _MAX_LR: Final = math.log(1)
+
+
+class OneCycleLRExtended(OneCycleLR):
+    """Allow training beyond the step limit for the one cycle LR scheduler."""
+
+    def get_lr(self) -> List[float]:
+        """Handle errors thrown by the super class."""
+        try:
+            return super().get_lr()
+        except ValueError as ex:
+            if ex.args[0].startswith("Tried to step"):
+                return self.get_last_lr()
+            else:
+                raise ex
 
 
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
@@ -80,15 +94,18 @@ def get_lr_scheduler(
         return None
 
     sched_config = {}
+    sched_epochs = (
+        config.max_epochs if config.sched_epochs < 0 else config.sched_epochs
+    )
     if config.sched == "cos":
         sched_config["scheduler"] = CosineAnnealingLR(
-            optim, T_max=config.max_epochs
+            optim, T_max=sched_epochs
         )
     elif config.sched == "1clr":
-        sched_config["scheduler"] = OneCycleLR(
+        sched_config["scheduler"] = OneCycleLRExtended(
             optim,
             max_lr=config.lr,
-            epochs=config.max_epochs,
+            epochs=sched_epochs,
             steps_per_epoch=steps_per_epoch,
             cycle_momentum=config.optim != "rmsprop",
         )
