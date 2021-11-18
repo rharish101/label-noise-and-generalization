@@ -45,6 +45,22 @@ class MultiCycleLR(OneCycleLR):
                 raise ex
 
 
+class WarmUpLR(OneCycleLR):
+    """LR scheduler for the first phase of the OneCycleLR."""
+
+    @property
+    def last_epoch(self) -> int:
+        """Return the last step number for LR calculation."""
+        return self._last_step
+
+    @last_epoch.setter
+    def last_epoch(self, step_num: int) -> None:
+        """Prevent the last step number from exceeding the first phase."""
+        max_steps = self._schedule_phases[0]["end_step"]
+        if step_num <= max_steps:
+            self._last_step = step_num
+
+
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     """Choose an optimizer according to the config.
 
@@ -96,6 +112,7 @@ def get_lr_scheduler(
         "cos": CosineAnnealingLR
         "1clr": OneCycleLR (https://arxiv.org/abs/1708.07120)
         "cyclic": CycleLR (cyclic version of OneCycleLR)
+        "warmup": The first half of OneCycleLR (i.e. cosine annealing warmup)
         "none": No scheduler
 
     Args:
@@ -136,7 +153,15 @@ def get_lr_scheduler(
             cycle_momentum=config.optim != "rmsprop",
         )
         sched_config["interval"] = "step"
-
+    elif config.sched == "warmup":
+        sched_config["scheduler"] = WarmUpLR(
+            optim,
+            max_lr=config.lr,
+            epochs=sched_epochs,
+            steps_per_epoch=steps_per_epoch,
+            cycle_momentum=config.optim != "rmsprop",
+        )
+        sched_config["interval"] = "step"
     else:
         raise ValueError(f"Invalid scheduler {config.sched}")
     return sched_config
