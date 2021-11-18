@@ -29,6 +29,22 @@ class OneCycleLRExtended(OneCycleLR):
                 raise ex
 
 
+class MultiCycleLR(OneCycleLR):
+    """Multi-cycle version of the one cycle LR scheduler."""
+
+    def get_lr(self) -> List[float]:
+        """Restart the cycle if needed."""
+        try:
+            return super().get_lr()
+        except ValueError as ex:
+            if ex.args[0].startswith("Tried to step"):
+                # Reset the LR scheduler
+                self.last_epoch = -1
+                return super().get_lr()
+            else:
+                raise ex
+
+
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     """Choose an optimizer according to the config.
 
@@ -79,6 +95,7 @@ def get_lr_scheduler(
     The available schedulers are:
         "cos": CosineAnnealingLR
         "1clr": OneCycleLR (https://arxiv.org/abs/1708.07120)
+        "cyclic": CycleLR (cyclic version of OneCycleLR)
         "none": No scheduler
 
     Args:
@@ -110,6 +127,16 @@ def get_lr_scheduler(
             cycle_momentum=config.optim != "rmsprop",
         )
         sched_config["interval"] = "step"
+    elif config.sched == "cyclic":
+        sched_config["scheduler"] = MultiCycleLR(
+            optim,
+            max_lr=config.lr,
+            epochs=sched_epochs,
+            steps_per_epoch=steps_per_epoch,
+            cycle_momentum=config.optim != "rmsprop",
+        )
+        sched_config["interval"] = "step"
+
     else:
         raise ValueError(f"Invalid scheduler {config.sched}")
     return sched_config
