@@ -46,15 +46,24 @@ However, this is not required if you have installed pre-commit globally.
 
 ## Tasks
 
-Each task has a Python script associated with it.
+The optimizers are tested on multiple tasks.
+Each task involves training a certain model in a certain manner (supervised, unsupervised, etc.) on a certain dataset.
+Every task is given a task ID, which is used when running scripts.
+
+The list of tasks implemented, along with their IDs, are:
+
+Task | Task ID | Description
+-- | -- | --
+CIFAR-10 | `cifar` | A ResNet-18 on the CIFAR10 dataset.
+
+## Scripts
+
 All scripts use argparse to parse commandline arguments.
+Each Python script takes the task ID as a positional argument.
 To view the list of all positional and optional arguments for a script `script.py`, run:
 ```sh
 ./script.py --help
 ```
-
-The list of tasks implemented are:
-* **CIFAR10**: The script [`cifar10.py`](./cifar10.py) uses a ResNet-18 to train on the CIFAR10 dataset.
 
 ## Hyper-Parameters
 
@@ -75,15 +84,15 @@ The available hyper-parameters, their documentation and default values are speci
 In such a case, the missing ones will use their default values.
 
 ### Tuning
-Support for tuning hyper-parameters for the optimizers is available in all scripts.
-Scripts have the `-m` or the `--mode` flag to set the mode of operation.
+Support for tuning hyper-parameters for the optimizers is available in the training script.
+It has the `-m` or the `--mode` flag to set the mode of operation.
 This has the following values:
 * `train`: This simply trains a model. This is the default mode.
 * `tune`: This tunes the hyper-parameters using [Hyperopt](https://github.com/hyperopt/hyperopt).
 
-Thus, to tune hyper-parameters for models on a certain task, run the script for that task as follows:
+Thus, to tune hyper-parameters for models on a certain task, run the training script as follows:
 ```sh
-./script.py --mode tune
+./train.py --mode tune
 ```
 
 ## Logs

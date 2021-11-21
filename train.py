@@ -1,13 +1,17 @@
 #!/usr/bin/env python
-"""Train a ResNet on CIFAR10."""
+"""Train a model for a task."""
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from pathlib import Path
 
 from typing_extensions import Final
 
 from src.config import load_config
-from src.models import ResNet
-from src.tasks import get_cifar10
+from src.tasks import (
+    AVAILABLE_TASKS,
+    get_dataset,
+    get_model_fn,
+    get_tuning_objective_tag,
+)
 from src.training import train
 from src.tuning import tune_hparams
 
@@ -16,14 +20,17 @@ _TRAIN_MODE: Final = "train"
 _TUNE_MODE: Final = "tune"
 
 # The top-level sub-directory within the log directory per-mode
-TRAIN_EXPT_NAME: Final = "cifar10"
-TUNE_EXPT_NAME: Final = "cifar10-tuning"
+TRAIN_EXPT_FMT: Final = "{}"
+TUNE_EXPT_FMT: Final = "{}-tuning"
 
 
 def main(args: Namespace) -> None:
     """Run the main program."""
     config = load_config(args.config)
-    train_dataset, val_dataset, _ = get_cifar10(args.data_dir, config)
+    train_dataset, val_dataset, _ = get_dataset(
+        args.task, args.data_dir, config
+    )
+    model_fn = get_model_fn(args.task)
 
     log_dir = args.log_dir.expanduser()
     if args.resume_path is None:
@@ -33,7 +40,7 @@ def main(args: Namespace) -> None:
 
     if args.mode == _TRAIN_MODE:
         train(
-            ResNet(config),
+            model_fn(config),
             train_dataset,
             val_dataset,
             config,
@@ -44,16 +51,16 @@ def main(args: Namespace) -> None:
             disable_extra_logging=args.disable_extra_logging,
             precision=args.precision,
             ckpt_path=resume_path,
-            expt_name=TRAIN_EXPT_NAME,
+            expt_name=TRAIN_EXPT_FMT.format(args.task),
             run_name=args.run_name,
         )
     else:
         tune_hparams(
-            ResNet,
+            model_fn,
             train_dataset,
             val_dataset,
             config,
-            objective_tag=ResNet.ACC_TOTAL_TAG,
+            objective_tag=get_tuning_objective_tag(args.task),
             num_gpus=args.num_gpus,
             num_workers=args.num_workers,
             log_dir=log_dir,
@@ -61,15 +68,21 @@ def main(args: Namespace) -> None:
             minimize=False,
             precision=args.precision,
             trials_path=resume_path,
-            expt_name=TUNE_EXPT_NAME,
+            expt_name=TUNE_EXPT_FMT.format(args.task),
             run_name=args.run_name,
         )
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(
-        description="Train a ResNet on CIFAR10",
+        description="Train a model for a task",
         formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "task",
+        type=str,
+        choices=AVAILABLE_TASKS,
+        help="The choice of task with a dataset and an associated model",
     )
     parser.add_argument(
         "-m",
