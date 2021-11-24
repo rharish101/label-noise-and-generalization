@@ -13,6 +13,8 @@ from ..utils import LabelNoiseDataset
 
 NUM_CLASSES: Final = 10
 
+_DataPtType = Tuple[Tensor, int]
+
 
 def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
     """Get the image augmentations for CIFAR10.
@@ -39,7 +41,7 @@ def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
 
 def get_cifar10(
     data_dir: Path, config: Config
-) -> Tuple[Dataset, Dataset, Dataset]:
+) -> Tuple[Dataset[_DataPtType], Dataset[_DataPtType], Dataset[_DataPtType]]:
     """Get the CIFAR10 training, validation, and test datasets.
 
     Args:

@@ -2,18 +2,22 @@
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple, TypeVar
 
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
 from torch.utils.data import Dataset
 
 from .config import Config
 
+T = TypeVar("T")
 
-class LabelNoiseDataset(Dataset):
+
+class LabelNoiseDataset(Dataset[T]):
     """Dataset for randomly adding label noise."""
 
-    def __init__(self, dataset: Dataset, config: Config, num_classes: int):
+    def __init__(
+        self, dataset: Dataset[Tuple[T, int]], config: Config, num_classes: int
+    ):
         """Store the original dataset.
 
         Args:
@@ -57,7 +61,7 @@ class LabelNoiseDataset(Dataset):
         else:
             raise ValueError(f"Invalid noise type {self.config.noise_type}")
 
-    def __getitem__(self, idx: int) -> Tuple[Any, int, bool]:
+    def __getitem__(self, idx: int) -> Tuple[T, int, bool]:
         """Get the data point at the given index.
 
         Returns:
