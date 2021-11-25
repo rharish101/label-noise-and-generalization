@@ -27,7 +27,7 @@ TUNE_EXPT_FMT: Final = "{}-tuning"
 def main(args: Namespace) -> None:
     """Run the main program."""
     config = load_config(args.config)
-    train_dataset, val_dataset, _ = get_dataset(
+    train_dataset, val_dataset, _, collate_fn = get_dataset(
         args.task, args.data_dir, config
     )
     model_fn = get_model_fn(args.task)
@@ -48,6 +48,7 @@ def main(args: Namespace) -> None:
             num_workers=args.num_workers,
             log_dir=log_dir,
             log_steps=args.log_steps,
+            collate_fn=collate_fn,
             disable_extra_logging=args.disable_extra_logging,
             precision=args.precision,
             ckpt_path=resume_path,
@@ -65,6 +66,7 @@ def main(args: Namespace) -> None:
             num_workers=args.num_workers,
             log_dir=log_dir,
             log_steps=args.log_steps,
+            collate_fn=collate_fn,
             minimize=False,
             precision=args.precision,
             trials_path=resume_path,

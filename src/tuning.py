@@ -14,7 +14,7 @@ from .config import Config, update_config
 from .models import BaseModel
 from .optimizers import get_hparam_space
 from .training import train
-from .utils import get_timestamp
+from .utils import CollateFnType, get_timestamp
 
 # Where to save the best config after tuning
 BEST_CONFIG_FILE: Final = "best-hparams.yaml"
@@ -40,6 +40,7 @@ def tune_hparams(
     num_workers: int,
     log_dir: Path,
     log_steps: int,
+    collate_fn: CollateFnType = None,
     minimize: bool = True,
     precision: int = 16,  # Use automatic mixed-precision training
     expt_name: str = "tuning",
@@ -59,6 +60,8 @@ def tune_hparams(
             dataset items
         log_dir: The path to the directory where all logs are to be stored
         log_steps: The step interval within an epoch for logging
+        collate_fn: A custom function for handling batched data (None to use
+            the PyTorch default)
         minimize: Whether the metric is to be minimzed or maximized
         precision: The floating-point precision to use for training the model
         expt_name: The name for the experiment

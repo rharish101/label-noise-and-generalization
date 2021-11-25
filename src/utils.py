@@ -2,17 +2,29 @@
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
+from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
-from torch.utils.data import Dataset
+from tokenizers import BertWordPieceTokenizer, Tokenizer
+from torch.utils.data import DataLoader, Dataset, IterableDataset
 
 from .config import Config
 
 T = TypeVar("T")
+CollateFnType = Optional[Callable[[List], Any]]
 
 
-class LabelNoiseDataset(Dataset[T]):
+class LabelNoiseDataset(Generic[T]):
     """Dataset for randomly adding label noise."""
 
     def __init__(
@@ -72,6 +84,63 @@ class LabelNoiseDataset(Dataset[T]):
         data, lbl = self.dataset[idx]
         new_lbl = self._add_lbl_noise(lbl, idx)
         return data, new_lbl, new_lbl != lbl
+
+
+class CollateDataModule(LightningDataModule):
+    """Data module that supports `collate_fn`."""
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        collate_fn: CollateFnType = None,
+    ) -> "CollateDataModule":
+        """Add `collate_fn` if `dataset.collate_fn` exist for a dataset."""
+
+        def dataloader(ds: Dataset, shuffle: bool = False) -> DataLoader[T]:
+            shuffle &= not isinstance(ds, IterableDataset)
+            return DataLoader(
+                ds,
+                batch_size=batch_size,
+                shuffle=shuffle,
+                num_workers=num_workers,
+                pin_memory=True,
+                collate_fn=collate_fn,
+            )
+
+        def train_dataloader():
+            return dataloader(train_dataset, shuffle=True)
+
+        def val_dataloader():
+            return dataloader(val_dataset)
+
+        def test_dataloader():
+            return dataloader(test_dataset)
+
+        datamodule = cls()
+        if train_dataset is not None:
+            datamodule.train_dataloader = train_dataloader
+        if val_dataset is not None:
+            datamodule.val_dataloader = val_dataloader
+        if test_dataset is not None:
+            datamodule.test_dataloader = test_dataloader
+        return datamodule
+
+
+def train_tokenizer(dataset: Iterator[str], vocab_size: int) -> Tokenizer:
+    """Train a tokenizer on the given dataset."""
+    tokenizer = BertWordPieceTokenizer()
+    tokenizer.train_from_iterator(dataset, vocab_size=vocab_size)
+    return tokenizer
+
+
+def load_tokenizer(vocab_path: Path) -> Tokenizer:
+    """Load a pre-trained tokenizer from the given path."""
+    return Tokenizer.from_file(str(vocab_path))
 
 
 def get_timestamp() -> str:

@@ -6,23 +6,37 @@ from torch.utils.data import Dataset
 from typing_extensions import Final
 
 from .config import Config
-from .data import cifar10
-from .models import BaseModel, ResNet
+from .data import cifar10, yahoo
+from .models import BaseModel, ResNet, SmallTransformer
+from .utils import CollateFnType
 
 _ModelFnType = Callable[[Config], BaseModel]
 
-_DATASET_FNs: Final = {"cifar10": cifar10.get_cifar10}
-_MODEL_FNs: Final[Dict[str, _ModelFnType]] = {
-    "cifar10": lambda config: ResNet(cifar10.NUM_CLASSES, config)
+_DATASET_FNs: Final = {
+    "cifar10": lambda data_dir, config: (
+        *cifar10.get_cifar10(data_dir, config),
+        None,
+    ),
+    "yahoo": yahoo.get_yahoo,
 }
-_OBJECTIVE_TAGS: Final = {"cifar10": ResNet.ACC_TOTAL_TAG}
+_MODEL_FNs: Final[Dict[str, _ModelFnType]] = {
+    "cifar10": lambda config: ResNet(cifar10.NUM_CLASSES, config),
+    "yahoo": lambda config: SmallTransformer(
+        yahoo.VOCAB_SIZE, yahoo.MAX_SEQ_LEN, yahoo.NUM_CLASSES, config
+    ),
+}
+_OBJECTIVE_TAGS: Final = {
+    "cifar10": ResNet.ACC_TOTAL_TAG,
+    "yahoo": SmallTransformer.ACC_TOTAL_TAG,
+}
 
-AVAILABLE_TASKS: Final = {"cifar10"}
+AVAILABLE_TASKS: Final = {"cifar10", "yahoo"}
+TEXT_TASKS: Final = {"yahoo"}
 
 
 def get_dataset(
     task: str, data_dir: Path, config: Config
-) -> Tuple[Dataset, Dataset, Dataset]:
+) -> Tuple[Dataset, Dataset, Dataset, CollateFnType]:
     """Get the appropriate datasets for this task.
 
     Args:
@@ -34,6 +48,7 @@ def get_dataset(
         The training dataset
         The validation dataset
         The test dataset
+        The optional custom function for handling batched data
     """
     try:
         dataset_fn = _DATASET_FNs[task]

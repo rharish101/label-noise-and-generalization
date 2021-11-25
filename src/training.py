@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import torch
-from pytorch_lightning import LightningDataModule, Trainer, seed_everything
+from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.plugins import DDPPlugin
 from pytorch_lightning.trainer.connectors.logger_connector import (
     LoggerConnector,
@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 
 from .config import Config
 from .models import BaseModel
-from .utils import get_logger
+from .utils import CollateDataModule, CollateFnType, get_logger
 
 
 class _ZeroIdxLoggerConnector(LoggerConnector):
@@ -53,6 +53,7 @@ def train(
     num_workers: int,
     log_dir: Path,
     log_steps: int,
+    collate_fn: CollateFnType = None,
     disable_extra_logging: bool = False,
     precision: int = 16,  # Use automatic mixed-precision training
     expt_name: str = "default",
@@ -71,6 +72,8 @@ def train(
             dataset items
         log_dir: The path to the directory where all logs are to be stored
         log_steps: The step interval within an epoch for logging
+        collate_fn: A custom function for handling batched data (None to use
+            the PyTorch default)
         disable_extra_logging: Whether to disable logging extra metrics, since
             their computation is slow
         precision: The floating-point precision to use for training the model
@@ -82,11 +85,12 @@ def train(
     Returns:
         The metrics for validation at the end of the model
     """
-    datamodule = LightningDataModule.from_datasets(
+    datamodule = CollateDataModule.from_datasets(
         train_dataset=train_dataset,
         val_dataset=val_dataset,
         batch_size=config.batch_size,
         num_workers=num_workers,
+        collate_fn=collate_fn,
     )
 
     # Assuming that the path follows the folder stucture:
