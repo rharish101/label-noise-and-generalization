@@ -61,6 +61,26 @@ class WarmUpLR(OneCycleLR):
             self._last_step = step_num
 
 
+class DelayedCosineLR(OneCycleLRExtended):
+    """LR scheduler for the second phase of the OneCycleLR.
+
+    This is effectively a cosine annealing LR for both learning rate and
+    momentum, but one that starts annealing after a delay.
+    """
+
+    def get_lr(self) -> List[float]:
+        """Return the max learning rate if currently in phase 1."""
+        phase_1_end = self._schedule_phases[0]["end_step"]
+        if self.last_epoch > phase_1_end:
+            return super().get_lr()
+
+        old_last_epoch = self.last_epoch
+        self.last_epoch: int = int(phase_1_end + 1)
+        lrs = super().get_lr()
+        self.last_epoch = old_last_epoch
+        return lrs
+
+
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     """Choose an optimizer according to the config.
 
@@ -113,6 +133,7 @@ def get_lr_scheduler(
         "1clr": OneCycleLR (https://arxiv.org/abs/1708.07120)
         "cyclic": CycleLR (cyclic version of OneCycleLR)
         "warmup": The first half of OneCycleLR (i.e. cosine annealing warmup)
+        "dcos": The second half of OneCycleLR (i.e. delayed cosine annealing)
         "none": No scheduler
 
     Args:
@@ -155,6 +176,15 @@ def get_lr_scheduler(
         sched_config["interval"] = "step"
     elif config.sched == "warmup":
         sched_config["scheduler"] = WarmUpLR(
+            optim,
+            max_lr=config.lr,
+            epochs=sched_epochs,
+            steps_per_epoch=steps_per_epoch,
+            cycle_momentum=config.optim != "rmsprop",
+        )
+        sched_config["interval"] = "step"
+    elif config.sched == "dcos":
+        sched_config["scheduler"] = DelayedCosineLR(
             optim,
             max_lr=config.lr,
             epochs=sched_epochs,
