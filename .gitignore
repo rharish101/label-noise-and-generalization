@@ -6,6 +6,6 @@ __pycache__/
 .mypy_cache/
 
 # Project-specific stuff
-datasets/
-logs/
-configs/
+datasets
+logs
+configs
