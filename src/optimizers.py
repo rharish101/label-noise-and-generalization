@@ -81,6 +81,14 @@ class DelayedCosineLR(OneCycleLRExtended):
         return lrs
 
 
+_NAME_TO_1CLR_SCHED: Final = {
+    "1clr": OneCycleLRExtended,
+    "cyclic": MultiCycleLR,
+    "warmup": WarmUpLR,
+    "dcos": DelayedCosineLR,
+}
+
+
 def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     """Choose an optimizer according to the config.
 
@@ -152,39 +160,14 @@ def get_lr_scheduler(
     sched_epochs = (
         config.max_epochs if config.sched_epochs < 0 else config.sched_epochs
     )
+
     if config.sched == "cos":
         sched_config["scheduler"] = CosineAnnealingLR(
             optim, T_max=sched_epochs
         )
-    elif config.sched == "1clr":
-        sched_config["scheduler"] = OneCycleLRExtended(
-            optim,
-            max_lr=config.lr,
-            epochs=sched_epochs,
-            steps_per_epoch=steps_per_epoch,
-            cycle_momentum=config.optim != "rmsprop",
-        )
-        sched_config["interval"] = "step"
-    elif config.sched == "cyclic":
-        sched_config["scheduler"] = MultiCycleLR(
-            optim,
-            max_lr=config.lr,
-            epochs=sched_epochs,
-            steps_per_epoch=steps_per_epoch,
-            cycle_momentum=config.optim != "rmsprop",
-        )
-        sched_config["interval"] = "step"
-    elif config.sched == "warmup":
-        sched_config["scheduler"] = WarmUpLR(
-            optim,
-            max_lr=config.lr,
-            epochs=sched_epochs,
-            steps_per_epoch=steps_per_epoch,
-            cycle_momentum=config.optim != "rmsprop",
-        )
-        sched_config["interval"] = "step"
-    elif config.sched == "dcos":
-        sched_config["scheduler"] = DelayedCosineLR(
+    elif config.sched in _NAME_TO_1CLR_SCHED:
+        sched_cls = _NAME_TO_1CLR_SCHED[config.sched]
+        sched_config["scheduler"] = sched_cls(
             optim,
             max_lr=config.lr,
             epochs=sched_epochs,
@@ -194,6 +177,7 @@ def get_lr_scheduler(
         sched_config["interval"] = "step"
     else:
         raise ValueError(f"Invalid scheduler {config.sched}")
+
     return sched_config
 
 
