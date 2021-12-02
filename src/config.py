@@ -47,7 +47,7 @@ class Config:
 def load_config(config_path: Optional[Path]) -> Config:
     """Load the hyper-param config at the given path.
 
-    If the path is None or doesn't exist, then an empty dict is returned.
+    If the path is None, then the default config is returned.
     """
     if config_path is not None:
         with open(config_path, "r") as f:
