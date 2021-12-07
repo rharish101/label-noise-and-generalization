@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from typing_extensions import Final
 
 from .config import Config
-from .data import cifar10, yahoo
+from .data import cifar10, imdb, yahoo
 from .models import BaseModel, ResNet, SmallTransformer
 from .utils import CollateFnType
 
@@ -18,20 +18,25 @@ _DATASET_FNs: Final = {
         None,
     ),
     "yahoo": yahoo.get_yahoo,
+    "imdb": imdb.get_imdb,
 }
 _MODEL_FNs: Final[Dict[str, _ModelFnType]] = {
     "cifar10": lambda config: ResNet(cifar10.NUM_CLASSES, config),
     "yahoo": lambda config: SmallTransformer(
         yahoo.VOCAB_SIZE, yahoo.MAX_SEQ_LEN, yahoo.NUM_CLASSES, config
     ),
+    "imdb": lambda config: SmallTransformer(
+        imdb.VOCAB_SIZE, imdb.MAX_SEQ_LEN, imdb.NUM_CLASSES, config
+    ),
 }
 _OBJECTIVE_TAGS: Final = {
     "cifar10": ResNet.ACC_TOTAL_TAG,
     "yahoo": SmallTransformer.ACC_TOTAL_TAG,
+    "imdb": SmallTransformer.ACC_TOTAL_TAG,
 }
 
-AVAILABLE_TASKS: Final = {"cifar10", "yahoo"}
-TEXT_TASKS: Final = {"yahoo"}
+AVAILABLE_TASKS: Final = {"cifar10", "yahoo", "imdb"}
+TEXT_TASKS: Final = {"yahoo", "imdb"}
 
 
 def get_dataset(
