@@ -13,6 +13,7 @@ from typing import (
     TypeVar,
 )
 
+import torch
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import LightningLoggerBase, TensorBoardLogger
 from tokenizers import BertWordPieceTokenizer, Tokenizer
@@ -131,16 +132,54 @@ class CollateDataModule(LightningDataModule):
         return datamodule
 
 
-def train_tokenizer(dataset: Iterator[str], vocab_size: int) -> Tokenizer:
-    """Train a tokenizer on the given dataset."""
-    tokenizer = BertWordPieceTokenizer()
-    tokenizer.train_from_iterator(dataset, vocab_size=vocab_size)
-    return tokenizer
+class TextTokenizer:
+    """Class to tokenize a batch of text."""
 
+    def __init__(
+        self,
+        tokenizer_path: Path,
+        train_dataset: Dataset,
+        vocab_size: int,
+        max_seq_len: int,
+    ):
+        """Load the tokenizer, and train if it doesn't exist.
 
-def load_tokenizer(vocab_path: Path) -> Tokenizer:
-    """Load a pre-trained tokenizer from the given path."""
-    return Tokenizer.from_file(str(vocab_path))
+        Args:
+            tokenizer_path: The path to the tokenizer file
+            train_dataset: The dataset to train the tokenizer
+            vocab_size: The limit on the size of the vocabulary
+            max_seq_len: The limit on the size of the vocabulary
+        """
+        # Load pre-trained tokenizer, but train if it doesn't exist
+        if tokenizer_path.exists():
+            self.load_tokenizer(tokenizer_path)
+        else:
+            self.train_tokenizer(
+                (txt for txt, _ in train_dataset), vocab_size=vocab_size
+            )
+            self.tokenizer.save(str(tokenizer_path))
+
+        self.tokenizer.enable_padding()
+        self.tokenizer.enable_truncation(max_seq_len)
+
+    def train_tokenizer(self, dataset: Iterator[str], vocab_size: int) -> None:
+        """Train a tokenizer on the given dataset."""
+        print("Training tokenizer...")
+        self.tokenizer = BertWordPieceTokenizer()
+        self.tokenizer.train_from_iterator(dataset, vocab_size=vocab_size)
+        print("Tokenizer trained")
+
+    def load_tokenizer(self, vocab_path: Path) -> None:
+        """Load a pre-trained tokenizer from the given path."""
+        self.tokenizer = Tokenizer.from_file(str(vocab_path))
+
+    def __call__(self, batch: List[Tuple]) -> Tuple[torch.Tensor, ...]:
+        """Tokenize the text."""
+        # Each item in `batch` could be (txt, lbl) or (txt, lbl, bool)
+        data = list(zip(*batch))
+        tokenized = self.tokenizer.encode_batch(data[0])
+        tokenized_tensor = torch.tensor([i.ids for i in tokenized])
+        return tuple([tokenized_tensor, *map(torch.tensor, data[1:])])
 
 
 def get_timestamp() -> str:

@@ -2,18 +2,18 @@
 from pathlib import Path
 from typing import Any, Callable, List, Tuple
 
-import torch
 from torch import Generator, Tensor
 from torch.utils.data import Dataset, Subset, random_split
 from torchtext.datasets import YahooAnswers
 from typing_extensions import Final
 
 from ..config import Config
-from ..utils import LabelNoiseDataset, load_tokenizer, train_tokenizer
+from ..utils import LabelNoiseDataset, TextTokenizer
 
 NUM_CLASSES: Final = 10
 VOCAB_SIZE: Final = 10000
 MAX_SEQ_LEN: Final = 128
+TOKENIZER_NAME: Final = "yahoo.json"
 
 _DataPtType = Tuple[Tensor, int]
 
@@ -39,43 +39,6 @@ class YahooAnswersProcessed(Dataset[_DataPtType]):
         """Flip the data and label order, shift labels and return."""
         lbl, txt = self.dataset[idx]
         return txt, lbl - 1
-
-
-class YahooTokenizer:
-    """Class to tokenize a batch of text."""
-
-    TOKENIZER_NAME: Final = "yahoo.json"
-
-    def __init__(self, root: Path, train_dataset: Dataset):
-        """Load the tokenizer, and train if it doesn't exist.
-
-        Args:
-            root: The root directory with the tokenizer file
-            train_dataset: The dataset to train the tokenizer
-        """
-        tokenizer_path = root / self.TOKENIZER_NAME
-
-        # Load pre-trained tokenizer, but train if it doesn't exist
-        if tokenizer_path.exists():
-            self.tokenizer = load_tokenizer(tokenizer_path)
-        else:
-            print("Training tokenizer...")
-            self.tokenizer = train_tokenizer(
-                (txt for txt, _ in train_dataset), vocab_size=VOCAB_SIZE
-            )
-            self.tokenizer.save(str(tokenizer_path))
-            print("Tokenizer trained")
-
-        self.tokenizer.enable_padding()
-        self.tokenizer.enable_truncation(MAX_SEQ_LEN)
-
-    def __call__(self, batch: List[Tuple]) -> Tuple[Tensor, ...]:
-        """Tokenize the text."""
-        # Each item in `batch` could be (txt, lbl) or (txt, lbl, bool)
-        data = list(zip(*batch))
-        tokenized = self.tokenizer.encode_batch(data[0])
-        tokenized_tensor = torch.tensor([i.ids for i in tokenized])
-        return tuple([tokenized_tensor, *map(torch.tensor, data[1:])])
 
 
 def get_yahoo(
@@ -113,5 +76,10 @@ def get_yahoo(
     )
     test = YahooAnswersProcessed(data_dir, split="test")
 
-    tokenizer = YahooTokenizer(data_dir, train_total)
+    tokenizer = TextTokenizer(
+        data_dir / TOKENIZER_NAME,
+        train_total,
+        vocab_size=VOCAB_SIZE,
+        max_seq_len=MAX_SEQ_LEN,
+    )
     return train_noisy, val, test, tokenizer
