@@ -11,7 +11,7 @@ from torch.nn.functional import cosine_similarity
 from typing_extensions import Final
 
 from ..config import Config
-from ..optimizers import get_lr_scheduler, get_optim
+from ..optimizers import get_lr_scheduler, get_momentum, get_optim
 
 
 class BaseModel(LightningModule, ABC):
@@ -31,6 +31,7 @@ class BaseModel(LightningModule, ABC):
     GRAD_NORM_TAG: Final = "gradient_norm"  # norm of gradient
     WT_UPDATE_NORM_TAG: Final = "weight_update_norm"  # ||W_{n+1} - W_n||
     LR_TAG: Final = "learning_rate"
+    MOMENTUM_TAG: Final = "momentum"
 
     # Tags for logging eigenvalues of the (stochastic) Hessian
     HESS_EV_FMT: Final = "hessian_eigenvalue_{}"  # To format with `.format()`
@@ -100,6 +101,10 @@ class BaseModel(LightningModule, ABC):
         else:
             lr = self.config.lr
         self.log(f"{self.LR_TAG}", lr)
+
+        momentum = get_momentum(self.optimizers())
+        if momentum is not None:
+            self.log(f"{self.MOMENTUM_TAG}", momentum)
 
     def _get_grads(self, inputs: Tensor, targets: Tensor) -> Tensor:
         outputs = self.forward(inputs)

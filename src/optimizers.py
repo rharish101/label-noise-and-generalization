@@ -129,3 +129,22 @@ def get_hparam_space(config: Config):
         del space["adaptivity"]
 
     return space
+
+
+def get_momentum(optim: Optimizer) -> Optional[float]:
+    """Get the momentum value from an optimizer.
+
+    Args:
+        optim: The optimizer
+
+    Returns:
+        The current value of the momentum, if it exists, else None
+    """
+    optim_params = optim.param_groups[0]
+
+    if isinstance(optim, Adam):
+        return optim_params["betas"][0]
+    elif isinstance(optim, SGD):
+        return optim_params["momentum"]
+    else:
+        raise NotImplementedError(f"Unsupported optimizer {type(optim)}")
