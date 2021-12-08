@@ -172,7 +172,7 @@ def get_lr_scheduler(
             max_lr=config.lr,
             epochs=sched_epochs,
             steps_per_epoch=steps_per_epoch,
-            cycle_momentum=config.optim != "rmsprop",
+            cycle_momentum=config.optim != "rmsprop" and config.sched_momentum,
         )
         sched_config["interval"] = "step"
     else:
