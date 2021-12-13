@@ -1,5 +1,6 @@
 """Utilities for various optimizers."""
 import math
+from random import Random
 from typing import Any, Dict, Iterable, List, Optional
 
 from hyperopt import hp
@@ -81,11 +82,90 @@ class DelayedCosineLR(OneCycleLRExtended):
         return lrs
 
 
+class PhaseShiftedCycleLR(OneCycleLR):
+    """Multi-cycle version of the one cycle LR scheduler."""
+
+    PHASE_KEY: Final = "phase_offset"
+
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        *args,
+        total_steps: int = None,
+        epochs: int = None,
+        steps_per_epoch: int = None,
+        seed: int = 0,
+        **kwargs,
+    ) -> None:
+        """Initialize the phases for each parameter group."""
+        if total_steps is None:
+            if epochs is None or steps_per_epoch is None:
+                raise ValueError(
+                    "Either total_steps must not be None, or epochs and "
+                    "steps_per_epoch must not be None"
+                )
+            total_steps = epochs * steps_per_epoch
+
+        rng = Random(seed)
+        for i, group in enumerate(optimizer.param_groups):
+            if i == 0:
+                # Set no phase shift for the 0th element, since this is used
+                # for logging the learning rate
+                group[self.PHASE_KEY] = 0
+            else:
+                group[self.PHASE_KEY] = rng.randint(0, total_steps - 1)
+
+        super().__init__(
+            optimizer,
+            *args,
+            total_steps=total_steps,
+            epochs=epochs,
+            steps_per_epoch=steps_per_epoch,
+            **kwargs,
+        )
+
+    def get_lr(self) -> List[float]:
+        """Implement phase shifting and cycling for OneCycleLR."""
+        lrs = []
+
+        for group in self.optimizer.param_groups:
+            start_step = 0
+            for i, phase in enumerate(self._schedule_phases):
+                step_num = (
+                    self.last_epoch + group[self.PHASE_KEY] - 1
+                ) % self.total_steps + 1
+                end_step = phase["end_step"]
+                if step_num <= end_step or i == len(self._schedule_phases) - 1:
+                    pct = (step_num - start_step) / (end_step - start_step)
+                    computed_lr = self.anneal_func(
+                        group[phase["start_lr"]], group[phase["end_lr"]], pct
+                    )
+                    if self.cycle_momentum:
+                        computed_momentum = self.anneal_func(
+                            group[phase["start_momentum"]],
+                            group[phase["end_momentum"]],
+                            pct,
+                        )
+                    break
+                start_step = phase["end_step"]
+
+            lrs.append(computed_lr)
+            if self.cycle_momentum:
+                if self.use_beta1:
+                    _, beta2 = group["betas"]
+                    group["betas"] = (computed_momentum, beta2)
+                else:
+                    group["momentum"] = computed_momentum
+
+        return lrs
+
+
 _NAME_TO_1CLR_SCHED: Final = {
     "1clr": OneCycleLRExtended,
     "cyclic": MultiCycleLR,
     "warmup": WarmUpLR,
     "dcos": DelayedCosineLR,
+    "phase": PhaseShiftedCycleLR,
 }
 
 
@@ -107,6 +187,7 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
     Returns:
         The requested optimizer, as per the config
     """
+    param_groups = [{"params": [param]} for param in params]
     if config.optim == "adam":
         momentum = config.momentum
         adaptivity = config.adaptivity
@@ -115,7 +196,7 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
         adaptivity = config.adaptivity
     elif config.optim == "sgd":
         return SGD(
-            params,
+            param_groups,
             lr=config.lr,
             momentum=config.momentum,
             weight_decay=config.weight_decay,
@@ -124,7 +205,7 @@ def get_optim(params: Iterable[Tensor], config: Config) -> Optimizer:
         raise ValueError(f"Invalid optimizer {config.optim}")
 
     return Adam(
-        params,
+        param_groups,
         lr=config.lr,
         betas=[momentum, adaptivity],
         weight_decay=config.weight_decay,
@@ -142,6 +223,7 @@ def get_lr_scheduler(
         "cyclic": CycleLR (cyclic version of OneCycleLR)
         "warmup": The first half of OneCycleLR (i.e. cosine annealing warmup)
         "dcos": The second half of OneCycleLR (i.e. delayed cosine annealing)
+        "phase": Like "cyclic", but every parameter is randomly phase-shifted
         "none": No scheduler
 
     Args:
