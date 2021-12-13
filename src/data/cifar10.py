@@ -25,11 +25,12 @@ def get_transform(train: bool = False) -> Callable[[Tensor], Tensor]:
     Returns:
         The image transformation function
     """
-    transform_list = [transforms.Resize([64, 64])]
+    transform_list = []
     if train:
-        transform_list.append(
-            transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10)
-        )
+        transform_list += [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+        ]
     transform_list += [
         transforms.ToTensor(),
         transforms.Normalize(
