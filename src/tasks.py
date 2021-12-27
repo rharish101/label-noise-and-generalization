@@ -13,7 +13,9 @@ _ModelFnType = Callable[[Config], BaseModel]
 
 _DATASET_FNs: Final = {"cifar10": cifar10.get_cifar10}
 _MODEL_FNs: Final[Dict[str, _ModelFnType]] = {
-    "cifar10": lambda config: ResNet(cifar10.NUM_CLASSES, config)
+    "cifar10": lambda config: ResNet(
+        cifar10.NUM_CLASSES, config, cifar10.IN_CHANNELS
+    )
 }
 _OBJECTIVE_TAGS: Final = {"cifar10": ResNet.ACC_TOTAL_TAG}
 

@@ -11,6 +11,7 @@ from typing_extensions import Final
 from ..config import Config
 from ..utils import LabelNoiseDataset
 
+IN_CHANNELS: Final = 3
 NUM_CLASSES: Final = 10
 
 _DataPtType = Tuple[Tensor, int]

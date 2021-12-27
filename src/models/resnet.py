@@ -61,18 +61,19 @@ class _BasicBlock(Module):
 class ResNet(ClassifierBase):
     """A ResNet-based model for image classification."""
 
-    def __init__(self, num_classes: int, config: Config):
+    def __init__(self, num_classes: int, config: Config, in_channels: int = 3):
         """Initialize the model.
 
         Args:
             num_classes: The total number of classes
             config: The hyper-param config
+            in_channels: The number of input channels
         """
         super().__init__(config, CrossEntropyLoss())
         self.in_planes = 64
 
         self.conv1 = Conv2d(
-            3, 64, kernel_size=3, stride=1, padding=1, bias=False
+            in_channels, 64, kernel_size=3, stride=1, padding=1, bias=False
         )
         self.bn1 = BatchNorm2d(64)
         self.layer1 = self._make_layer(64)
