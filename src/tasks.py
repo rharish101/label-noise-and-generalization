@@ -6,20 +6,29 @@ from torch.utils.data import Dataset
 from typing_extensions import Final
 
 from .config import Config
-from .data import cifar10
+from .data import cifar10, fmnist
 from .models import BaseModel, ResNet
 
 _ModelFnType = Callable[[Config], BaseModel]
 
-_DATASET_FNs: Final = {"cifar10": cifar10.get_cifar10}
+_DATASET_FNs: Final = {
+    "cifar10": cifar10.get_cifar10,
+    "fmnist": fmnist.get_fmnist,
+}
 _MODEL_FNs: Final[Dict[str, _ModelFnType]] = {
     "cifar10": lambda config: ResNet(
         cifar10.NUM_CLASSES, config, cifar10.IN_CHANNELS
-    )
+    ),
+    "fmnist": lambda config: ResNet(
+        fmnist.NUM_CLASSES, config, fmnist.IN_CHANNELS
+    ),
 }
-_OBJECTIVE_TAGS: Final = {"cifar10": ResNet.ACC_TOTAL_TAG}
+_OBJECTIVE_TAGS: Final = {
+    "cifar10": ResNet.ACC_TOTAL_TAG,
+    "fmnist": ResNet.ACC_TOTAL_TAG,
+}
 
-AVAILABLE_TASKS: Final = {"cifar10"}
+AVAILABLE_TASKS: Final = {"cifar10", "fmnist"}
 
 
 def get_dataset(
