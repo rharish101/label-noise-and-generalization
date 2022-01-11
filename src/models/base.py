@@ -128,7 +128,7 @@ class BaseModel(LightningModule, ABC):
                 corresponding targets were changed
             train: Whether this is the training phase
         """
-        if self.disable_extra_logging:
+        if self.disable_extra_logging or was_lbl_changed.all():
             return
 
         grads_all = self._get_grads(inputs, targets)
