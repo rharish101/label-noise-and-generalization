@@ -16,6 +16,24 @@ _MIN_LR: Final = math.log(1e-6)
 _MAX_LR: Final = math.log(1)
 
 
+class CosineNonCyclicLR(CosineAnnealingLR):
+    """Prevent the cosine annealing LR from increasing and going in cycles."""
+
+    def get_lr(self) -> List[float]:
+        """Return minimum LR if max epochs are done."""
+        if self.T_max > self.last_epoch:
+            return super().get_lr()
+        else:
+            return [self.eta_min] * len(self.optimizer.param_groups)
+
+    def _get_closed_form_lr(self) -> List[float]:
+        """Return minimum LR if max epochs are done."""
+        if self.T_max > self.last_epoch:
+            return super()._get_closed_form_lr()
+        else:
+            return [self.eta_min] * len(self.optimizer.param_groups)
+
+
 class OneCycleLRExtended(OneCycleLR):
     """Allow training beyond the step limit for the one cycle LR scheduler."""
 
@@ -237,15 +255,19 @@ def get_lr_scheduler(
     """
     if config.sched == "none":
         return None
+    elif steps_per_epoch is None:
+        raise ValueError(
+            "`steps_per_epoch` must not be None if LR scheduler is requested"
+        )
 
-    sched_config = {}
+    sched_config: Dict[str, Any] = {"interval": "step"}
     sched_epochs = (
         config.max_epochs if config.sched_epochs < 0 else config.sched_epochs
     )
 
     if config.sched == "cos":
-        sched_config["scheduler"] = CosineAnnealingLR(
-            optim, T_max=sched_epochs
+        sched_config["scheduler"] = CosineNonCyclicLR(
+            optim, T_max=sched_epochs * steps_per_epoch
         )
     elif config.sched in _NAME_TO_1CLR_SCHED:
         sched_cls = _NAME_TO_1CLR_SCHED[config.sched]
@@ -256,7 +278,6 @@ def get_lr_scheduler(
             steps_per_epoch=steps_per_epoch,
             cycle_momentum=config.optim != "rmsprop" and config.sched_momentum,
         )
-        sched_config["interval"] = "step"
     else:
         raise ValueError(f"Invalid scheduler {config.sched}")
 
