@@ -35,6 +35,7 @@ class BaseModel(LightningModule, ABC):
 
     # Tags for logging eigenvalues of the (stochastic) Hessian
     HESS_EV_FMT: Final = "hessian_eigenvalue_{}"  # To format with `.format()`
+    HESS_TRACE: Final = "hessian_trace"
     NUM_HESS_EV: Final = 2  # No. of top Hessian eigenvalues to calculate
 
     # Tag for cosine similarity b/w gradients of clean vs clean+noisy samples
@@ -187,12 +188,15 @@ class BaseModel(LightningModule, ABC):
             cuda=self.device.type != "cpu",
         )
         hessian_evs = hessian_comp.eigenvalues(top_n=self.NUM_HESS_EV)[0]
+        hessian_trace = torch.tensor(hessian_comp.trace()).mean()
 
         mode_tag = self.TRAIN_PREFIX if train else self.VAL_PREFIX
         for i in range(self.NUM_HESS_EV):
             self.log(
                 f"{mode_tag}/{self.HESS_EV_FMT}".format(i), hessian_evs[i]
             )
+
+        self.log(f"{mode_tag}/{self.HESS_TRACE}", hessian_trace)
 
     def _get_steps_per_epoch(self) -> int:
         """Get the total number of training steps per epoch.
