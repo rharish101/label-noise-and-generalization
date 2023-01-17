@@ -1,4 +1,4 @@
-# Adaptive Generalization
+# Label Noise, Schedulers and Generalization
 
 This is a repository for my semester project (Research in Computer Science: 263-0600-00L) under the [Data Analytics group](http://da.inf.ethz.ch/) at ETH Zürich in the fall semester of 2021.
 
