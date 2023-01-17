@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "adagen"
+name = "label-noise-and-generalization"
 version = "0.1.0"
 description = ""
 authors = ["Harish Rajagopal <harish.rajagopals@gmail.com>"]
