@@ -109,9 +109,9 @@ class PhaseShiftedCycleLR(OneCycleLR):
         self,
         optimizer: Optimizer,
         *args,
-        total_steps: int = None,
-        epochs: int = None,
-        steps_per_epoch: int = None,
+        total_steps: Optional[int] = None,
+        epochs: Optional[int] = None,
+        steps_per_epoch: Optional[int] = None,
         seed: int = 0,
         **kwargs,
     ) -> None:
