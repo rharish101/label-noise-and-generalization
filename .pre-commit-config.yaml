@@ -1,24 +1,15 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 21.9b0
+    rev: 22.12.0
     hooks:
       - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.9.3
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.224
     hooks:
-      - id: isort
-  - repo: https://github.com/PyCQA/flake8
-    rev: 3.9.2
-    hooks:
-      - id: flake8
-  - repo: https://github.com/PyCQA/pydocstyle
-    rev: 6.1.1
-    hooks:
-      - id: pydocstyle
-        additional_dependencies:
-          - toml
+      - id: ruff
+        args: [--fix]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.910-1
+    rev: v0.991
     hooks:
       - id: mypy
         additional_dependencies:
