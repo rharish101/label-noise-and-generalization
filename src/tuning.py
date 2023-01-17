@@ -118,8 +118,8 @@ def tune_hparams(
         rng = RandomState(config.seed)
         trials_path = log_dir / expt_name / run_name / TRIALS_FILE
     else:
-        with open(trials_path, "rb") as trials_file:
-            progress: _Progress = pickle.load(trials_file)
+        with open(trials_path, "rb") as trials_reader:
+            progress: _Progress = pickle.load(trials_reader)
         trials = progress.trials
         rng = progress.rng
 
@@ -139,8 +139,8 @@ def tune_hparams(
             show_progressbar=False,
             rstate=rng,
         )
-        with open(trials_path, "wb") as trials_file:
-            pickle.dump(_Progress(trials, rng), trials_file)
+        with open(trials_path, "wb") as trials_writer:
+            pickle.dump(_Progress(trials, rng), trials_writer)
 
     best_hparams = space_eval(space, trials.argmin)
     best_config = update_config(config, best_hparams)
